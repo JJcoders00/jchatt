@@ -1,0 +1,135 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg-primary: #000000; /* Pitch Black */
+  --bg-secondary: #0A0A0A; /* Dark Grey for Sidebar/Panels */
+  --bg-panel: #0A0A0A;
+  --bg-glass: rgba(28, 28, 30, 0.85);
+  
+  --text-primary: #FFFFFF; /* White Text */
+  --text-secondary: #8E8E93; /* Muted Text */
+  
+  --accent-primary: #0066FF; /* Vibrant Blue Accent */
+  --accent-hover: #005CE6;
+  --accent-glow: rgba(0, 102, 255, 0.4);
+  
+  --danger: #FF3B30;
+  --success: #34C759;
+  --warning: #FF9500;
+  
+  --border-color: rgba(255, 255, 255, 0.05);
+  
+  --glass-blur: blur(10px);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.03);
+  --glass-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 8px;
+  
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: var(--bg-panel);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.glass-button {
+  background: var(--bg-glass);
+  border: var(--glass-border);
+  backdrop-filter: blur(8px);
+  color: var(--text-primary);
+  transition: var(--transition);
+}
+
+.glass-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input, textarea {
+  font-family: inherit;
+  outline: none;
+}
+
+/* Mobile Layout Handling */
+@media (max-width: 768px) {
+  .app-container.chat-active .sidebar {
+    display: none !important;
+  }
+  .app-container.sidebar-active .chat-window {
+    display: none !important;
+  }
+  .sidebar {
+    width: 100% !important;
+    border-right: none !important;
+  }
+}
+
+.mobile-back-btn {
+  display: none;
+  margin-right: 12px;
+}
+@media (max-width: 768px) {
+  .mobile-back-btn {
+    display: flex;
+  }
+}

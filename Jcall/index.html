@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Jcall by JJ Coders</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ADDED: LZ-String for compressing massive WebRTC SDP strings -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono&display=swap');
+
+        :root {
+            --bg-dark: #121212;
+            --neon-green: #39FF14;
+            --dark-panel: #1e1e1e;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--neon-green); }
+
+        /* Neon Glows & Animations */
+        .neon-text {
+            color: var(--neon-green);
+            text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+        }
+
+        .neon-border {
+            border-color: var(--neon-green);
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+        }
+
+        .neon-border-focus:focus {
+            outline: none;
+            border-color: var(--neon-green);
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
+        }
+
+        .neon-btn {
+            background-color: transparent;
+            color: var(--neon-green);
+            border: 1px solid var(--neon-green);
+            transition: all 0.3s ease;
+        }
+
+        .neon-btn:hover {
+            background-color: var(--neon-green);
+            color: var(--bg-dark);
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.6);
+        }
+
+        .neon-btn-solid {
+            background-color: var(--neon-green);
+            color: var(--bg-dark);
+            transition: all 0.3s ease;
+        }
+        
+        .neon-btn-solid:hover {
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* Pulse Animation for Status */
+        @keyframes pulse-dot {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(57, 255, 20, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(57, 255, 20, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(57, 255, 20, 0); }
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--neon-green);
+            display: inline-block;
+        }
+
+        .status-dot.pulsing {
+            animation: pulse-dot 2s infinite;
+        }
+
+        .status-dot.disconnected {
+            background-color: #ff3333;
+            animation: none;
+            box-shadow: none;
+        }
+
+        /* Video Container Styles */
+        #video-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #050505;
+            z-index: 0;
+            display: none; /* Hidden until camera starts */
+        }
+
+        #remoteVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #0a0a0a;
+        }
+
+        #localVideo {
+            position: absolute;
+            bottom: 110px;
+            right: 20px;
+            width: 120px;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 0.75rem;
+            border: 2px solid var(--neon-green);
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+            z-index: 10;
+            transition: all 0.3s;
+            transform: scaleX(-1); /* Mirror effect */
+        }
+
+        @media (max-width: 640px) {
+            #localVideo {
+                width: 90px;
+                height: 120px;
+                bottom: 110px; /* Above controls */
+                right: 15px;
+            }
+        }
+
+        /* Transitions */
+        .fade-enter { opacity: 0; transform: translateY(10px); }
+        .fade-enter-active { opacity: 1; transform: translateY(0); transition: opacity 0.4s, transform 0.4s; }
+        
+        .hidden-panel { display: none !important; }
+    </style>
+</head>
+<body class="flex flex-col h-screen">
+
+    <!-- Header -->
+    <header class="p-4 border-b border-gray-800 flex justify-between items-center bg-[#121212] z-20 relative shadow-md">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="resetApp(true)">
+            <div class="w-8 h-8 rounded bg-[#1e1e1e] border border-[#39FF14] flex items-center justify-center neon-text font-bold text-xl">
+                J
+            </div>
+            <h1 class="text-xl font-bold tracking-wider">JCALL <span class="text-xs text-gray-500 font-normal">by JJ Coders</span></h1>
+        </div>
+        <div class="flex items-center gap-2 bg-[#1e1e1e] px-3 py-1.5 rounded-full border border-gray-700">
+            <span id="statusIndicator" class="status-dot"></span>
+            <span id="statusText" class="text-sm font-medium text-gray-300">Ready</span>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col items-center justify-center relative w-full max-w-4xl mx-auto z-10">
+        
+        <!-- ======================= -->
+        <!-- STATE 1: HOME PANEL     -->
+        <!-- ======================= -->
+        <div id="panel-home" class="w-full max-w-md w-full flex flex-col gap-6 fade-enter-active">
+            <div class="text-center mb-4">
+                <h2 class="text-3xl font-bold mb-2">Secure P2P Video</h2>
+                <p class="text-gray-400 text-sm">100% Serverless. Zero Logs. Encrypted Device-to-Device Communication.</p>
+            </div>
+
+            <button onclick="initiateCall()" class="neon-btn-solid w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Create New Call
+            </button>
+            
+            <div class="flex items-center gap-4 w-full">
+                <div class="flex-1 h-px bg-gray-800"></div>
+                <span class="text-gray-500 text-sm">OR</span>
+                <div class="flex-1 h-px bg-gray-800"></div>
+            </div>
+
+            <button onclick="showJoinPanel()" class="w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 bg-[#1e1e1e] text-white border border-gray-700 hover:border-[#39FF14] hover:text-[#39FF14] transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                Join Existing Call
+            </button>
+        </div>
+
+        <!-- ======================= -->
+        <!-- STATE 2: CALLER PANEL   -->
+        <!-- ======================= -->
+        <div id="panel-caller" class="w-full max-w-lg hidden-panel flex flex-col gap-5 bg-[#1e1e1e]/85 backdrop-blur-xl p-6 rounded-2xl border border-gray-800 shadow-2xl relative z-20">
+            <h3 class="text-xl font-bold neon-text border-b border-gray-800 pb-3">Step 1: Share Offer Code</h3>
+            <p class="text-sm text-gray-400">Copy this shortened secure code and send it to your friend.</p>
+            
+            <div class="relative">
+                <textarea id="offerCodeDisplay" readonly class="w-full h-24 bg-[#121212] border border-gray-700 rounded-lg p-3 text-xs font-mono text-gray-300 resize-none focus:outline-none break-all" placeholder="Generating keys..."></textarea>
+                <button onclick="copyToClipboard('offerCodeDisplay')" class="absolute bottom-3 right-3 bg-[#39FF14] text-[#121212] px-3 py-1.5 rounded text-sm font-bold hover:bg-white transition-colors flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    Copy
+                </button>
+            </div>
+
+            <h3 class="text-xl font-bold neon-text border-b border-gray-800 pb-3 mt-4">Step 2: Paste Answer</h3>
+            <p class="text-sm text-gray-400">Once your friend replies with their JJ code, paste it below to connect.</p>
+            
+            <div class="relative">
+                <textarea id="answerCodeInput" class="w-full h-24 bg-[#121212] border border-gray-700 neon-border-focus rounded-lg p-3 text-xs font-mono text-white resize-none break-all" placeholder="Paste friend's JJ answer code here..."></textarea>
+                <button onclick="pasteFromClipboard('answerCodeInput')" class="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                </button>
+            </div>
+
+            <button onclick="processFriendAnswer()" class="neon-btn-solid w-full py-3 rounded-lg font-bold text-lg mt-2">Connect Now</button>
+        </div>
+
+        <!-- ======================= -->
+        <!-- STATE 3: JOINER PANEL   -->
+        <!-- ======================= -->
+        <div id="panel-joiner" class="w-full max-w-lg hidden-panel flex flex-col gap-5 bg-[#1e1e1e]/85 backdrop-blur-xl p-6 rounded-2xl border border-gray-800 shadow-2xl relative z-20">
+            <button onclick="resetApp(true)" class="text-sm text-gray-500 hover:text-white flex items-center gap-1 mb-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Back
+            </button>
+            
+            <h3 class="text-xl font-bold neon-text border-b border-gray-800 pb-3">Step 1: Paste Offer</h3>
+            <p class="text-sm text-gray-400">Paste the JJ code your friend sent you.</p>
+            
+            <div class="relative">
+                <textarea id="offerCodeInput" class="w-full h-24 bg-[#121212] border border-gray-700 neon-border-focus rounded-lg p-3 text-xs font-mono text-white resize-none break-all" placeholder="Paste JJ offer code here..."></textarea>
+                <button onclick="pasteFromClipboard('offerCodeInput')" class="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002-2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                </button>
+            </div>
+            
+            <button id="processOfferBtn" onclick="processFriendOffer()" class="w-full py-3 rounded-lg font-bold text-lg bg-white text-black hover:bg-gray-200 transition-colors">Generate Answer</button>
+
+            <div id="answerCodeContainer" class="hidden flex-col gap-3 mt-4 border-t border-gray-800 pt-5">
+                <h3 class="text-xl font-bold neon-text">Step 2: Share Answer</h3>
+                <p class="text-sm text-gray-400">Send this shortened generated code back to your friend.</p>
+                <div class="relative">
+                    <textarea id="answerCodeDisplay" readonly class="w-full h-24 bg-[#121212] border border-gray-700 rounded-lg p-3 text-xs font-mono text-gray-300 resize-none focus:outline-none break-all" placeholder="Generating keys..."></textarea>
+                    <button onclick="copyToClipboard('answerCodeDisplay')" class="absolute bottom-3 right-3 bg-[#39FF14] text-[#121212] px-3 py-1.5 rounded text-sm font-bold hover:bg-white transition-colors flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        Copy
+                    </button>
+                </div>
+                <div class="text-center mt-2 text-sm text-gray-500 animate-pulse">Waiting for friend to connect...</div>
+            </div>
+        </div>
+
+        <!-- ======================= -->
+        <!-- STATE 4: VIDEO CALL UI  -->
+        <!-- ======================= -->
+        <div id="video-wrapper">
+            <video id="remoteVideo" autoplay playsinline></video>
+            <video id="localVideo" autoplay playsinline muted></video>
+            
+            <!-- Controls Overlay -->
+            <div class="absolute bottom-8 left-0 right-0 flex justify-center gap-4 z-30 px-4">
+                
+                <button onclick="toggleAudio()" id="btn-audio" class="w-14 h-14 rounded-full bg-gray-800/80 backdrop-blur-md border border-gray-600 flex items-center justify-center hover:bg-gray-700 transition-colors text-white">
+                    <svg id="icon-mic-on" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                    <svg id="icon-mic-off" class="w-6 h-6 hidden text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3l18 18M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6"></path></svg>
+                </button>
+
+                <button onclick="toggleVideo()" id="btn-video" class="w-14 h-14 rounded-full bg-gray-800/80 backdrop-blur-md border border-gray-600 flex items-center justify-center hover:bg-gray-700 transition-colors text-white">
+                    <svg id="icon-cam-on" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    <svg id="icon-cam-off" class="w-6 h-6 hidden text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2zM3 3l18 18"></path></svg>
+                </button>
+
+                <button onclick="switchCamera()" id="btn-switch" class="w-14 h-14 rounded-full bg-gray-800/80 backdrop-blur-md border border-gray-600 flex items-center justify-center hover:bg-gray-700 transition-colors text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </button>
+
+                <button onclick="endCall()" class="w-14 h-14 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center transition-colors shadow-lg shadow-red-500/30">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l2.586-2.586a2 2 0 012.828 0l-.001.001a2 2 0 010 2.828l-2.586 2.586m-5.657 5.657l2.586-2.586m0 0l2.586 2.586m-2.586-2.586L10.343 16"></path></svg>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Custom Toast Notification -->
+    <div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-[#1e1e1e] border border-[#39FF14] text-white px-4 py-2 rounded-lg shadow-lg shadow-[#39FF14]/20 transition-all duration-300 opacity-0 pointer-events-none z-50">
+        Message copied!
+    </div>
+
+    <!-- ENGINE LOGIC -->
+    <script>
+        // CORE ENGINE FOR JJ CODERS P2P LOGIC
+        let pc;
+        let localStream;
+        let isAudioMuted = false;
+        let isVideoOff = false;
+        let currentFacingMode = 'user'; // 'user' (front) or 'environment' (back)
+        
+        // Configuration with standard Google STUN server
+        const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+        // UI Helpers
+        const el = (id) => document.getElementById(id);
+        const hideAllPanels = () => {
+            ['panel-home', 'panel-caller', 'panel-joiner', 'video-wrapper'].forEach(id => {
+                el(id).classList.add('hidden-panel');
+            });
+        };
+
+        function setStatus(text, state = 'normal') {
+            el('statusText').innerText = text;
+            const dot = el('statusIndicator');
+            dot.className = 'status-dot'; // reset
+            
+            if (state === 'pulsing') dot.classList.add('pulsing');
+            else if (state === 'error') dot.classList.add('disconnected');
+            // 'normal' is just solid green
+        }
+
+        function showToast(msg) {
+            const toast = el('toast');
+            toast.innerText = msg;
+            toast.style.opacity = '1';
+            toast.style.transform = 'translate(-50%, -10px)';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translate(-50%, 0)';
+            }, 3000);
+        }
+
+        // Smart Copy / Paste Logic
+        async function copyToClipboard(elementId) {
+            const textArea = el(elementId);
+            textArea.select();
+            try {
+                // Try modern API first
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(textArea.value);
+                } else {
+                    // Fallback for iFrames or older browsers
+                    document.execCommand('copy');
+                }
+                showToast("Code copied to clipboard!");
+            } catch (err) {
+                showToast("Failed to copy. Please copy manually.");
+            }
+        }
+
+        async function pasteFromClipboard(elementId) {
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    const text = await navigator.clipboard.readText();
+                    el(elementId).value = text;
+                    showToast("Code pasted!");
+                } else {
+                    showToast("Please long-press and paste manually.");
+                }
+            } catch (err) {
+                showToast("Please paste manually.");
+            }
+        }
+
+        // --- Custom Shortening & Branded Data Logic ---
+        function encodeJJCode(sdpData) {
+            // Compress heavily using LZ-String
+            const stringified = JSON.stringify(sdpData);
+            const compressed = LZString.compressToBase64(stringified);
+            // Wrap it with our custom JJ Coders tag
+            return `JJ-${compressed}-END`;
+        }
+
+        function decodeJJCode(codeStr) {
+            // Remove our custom wrappers
+            let cleanCode = codeStr.replace(/^JJ-/, '').replace(/-END$/, '').trim();
+            try {
+                // Try to decompress
+                const decompressed = LZString.decompressFromBase64(cleanCode);
+                if (decompressed) {
+                    return JSON.parse(decompressed);
+                }
+                // Fallback in case they somehow pasted the old standard base64 format
+                return JSON.parse(atob(cleanCode));
+            } catch (e) {
+                throw new Error("Invalid or corrupted JJ Code format.");
+            }
+        }
+
+        // --- Core WebRTC Flow ---
+
+        async function getMedia() {
+            if (localStream) {
+                // If stream already exists, don't get it again
+                return true;
+            }
+            try {
+                const constraints = { audio: true, video: { facingMode: currentFacingMode } };
+                localStream = await navigator.mediaDevices.getUserMedia(constraints);
+                el('localVideo').srcObject = localStream;
+                return true;
+            } catch (err) {
+                alert("Camera and Microphone access is required for Jcall.");
+                setStatus("Media Error", "error");
+                console.error(err);
+                return false;
+            }
+        }
+
+        async function startJJSession(isCaller) {
+            pc = new RTCPeerConnection(config);
+            setStatus("Connecting Camera...", "pulsing");
+
+            if (!localStream) {
+                const hasMedia = await getMedia();
+                if (!hasMedia) {
+                    resetApp(true);
+                    return false;
+                }
+            }
+
+            // Make sure video is visible immediately
+            el('video-wrapper').style.display = 'block';
+
+            // Attach local stream tracks to PeerConnection
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+            // Handle incoming stream from friend
+            pc.ontrack = (e) => { 
+                const remoteVid = el('remoteVideo');
+                if (remoteVid.srcObject !== e.streams[0]) {
+                    remoteVid.srcObject = e.streams[0];
+                    remoteVid.play().catch(console.error);
+                }
+            };
+
+            // Connection state monitoring
+            pc.onconnectionstatechange = () => {
+                if (pc.connectionState === 'connected') {
+                    setStatus("Connected", "normal");
+                    hideAllPanels(); // Hides panels, leaves video-wrapper visible as the background
+                } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+                    setStatus("Call Ended", "error");
+                    alert("Connection lost or ended.");
+                    resetApp(true);
+                } else {
+                    setStatus(pc.connectionState, "pulsing");
+                }
+            };
+
+            // Generate Handshake Code (The Engine Logic)
+            pc.onicecandidate = (e) => {
+                // Wait for all ICE candidates to be gathered for manual signaling
+                if (!e.candidate) {
+                    // Custom shortening logic implemented here
+                    const brandedCode = encodeJJCode(pc.localDescription);
+                    
+                    if (isCaller) {
+                        el('offerCodeDisplay').value = brandedCode;
+                        setStatus("Ready for Friend", "pulsing");
+                    } else {
+                        el('answerCodeDisplay').value = brandedCode;
+                        el('answerCodeContainer').classList.remove('hidden');
+                        el('processOfferBtn').classList.add('hidden');
+                        setStatus("Waiting for Connection", "pulsing");
+                    }
+                }
+            };
+
+            if (isCaller) {
+                try {
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+                    // onicecandidate will fire and generate the branded code
+                } catch (err) {
+                    console.error("Error creating offer", err);
+                    setStatus("Failed to create offer", "error");
+                }
+            }
+            return true;
+        }
+
+        // --- UI Flow Actions ---
+
+        async function initiateCall() {
+            hideAllPanels();
+            el('panel-caller').classList.remove('hidden-panel');
+            el('offerCodeDisplay').value = "Gathering secure network paths... (Please wait)";
+            
+            // Get media & show video wrapper immediately
+            const hasMedia = await getMedia();
+            if(hasMedia) el('video-wrapper').style.display = 'block';
+
+            await startJJSession(true);
+        }
+
+        async function showJoinPanel() {
+            hideAllPanels();
+            el('panel-joiner').classList.remove('hidden-panel');
+            el('offerCodeInput').value = "";
+            el('answerCodeDisplay').value = "";
+            el('answerCodeContainer').classList.add('hidden');
+            el('processOfferBtn').classList.remove('hidden');
+            setStatus("Ready to Join", "normal");
+
+            // Prompt for camera right away so they can see themselves
+            const hasMedia = await getMedia();
+            if(hasMedia) el('video-wrapper').style.display = 'block';
+        }
+
+        async function processFriendOffer() {
+            const offerStr = el('offerCodeInput').value.trim();
+            if (!offerStr) {
+                showToast("Please paste the offer code first.");
+                return;
+            }
+
+            try {
+                // Decode using the new logic
+                const data = decodeJJCode(offerStr);
+                if (data.type !== 'offer') throw new Error("Invalid code type");
+
+                const success = await startJJSession(false);
+                if (!success) return;
+
+                setStatus("Generating Response...", "pulsing");
+                await pc.setRemoteDescription(new RTCSessionDescription(data));
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                
+                // onicecandidate handles showing the answer code
+            } catch (err) {
+                alert("Invalid or corrupt JJ Code.");
+                console.error(err);
+            }
+        }
+
+        async function processFriendAnswer() {
+            const answerStr = el('answerCodeInput').value.trim();
+            if (!answerStr) {
+                showToast("Please paste the answer code first.");
+                return;
+            }
+
+            try {
+                // Decode using the new logic
+                const data = decodeJJCode(answerStr);
+                if (data.type !== 'answer') throw new Error("Invalid code type");
+                
+                setStatus("Connecting P2P...", "pulsing");
+                await pc.setRemoteDescription(new RTCSessionDescription(data));
+            } catch (err) {
+                alert("Invalid or corrupt JJ Code.");
+                console.error(err);
+            }
+        }
+
+        // --- Media Controls ---
+
+        function toggleAudio() {
+            if (!localStream) return;
+            isAudioMuted = !isAudioMuted;
+            localStream.getAudioTracks()[0].enabled = !isAudioMuted;
+            
+            el('icon-mic-on').classList.toggle('hidden', isAudioMuted);
+            el('icon-mic-off').classList.toggle('hidden', !isAudioMuted);
+            el('btn-audio').classList.toggle('border-red-500', isAudioMuted);
+        }
+
+        function toggleVideo() {
+            if (!localStream) return;
+            isVideoOff = !isVideoOff;
+            localStream.getVideoTracks()[0].enabled = !isVideoOff;
+            
+            el('icon-cam-on').classList.toggle('hidden', isVideoOff);
+            el('icon-cam-off').classList.toggle('hidden', !isVideoOff);
+            el('btn-video').classList.toggle('border-red-500', isVideoOff);
+        }
+
+        async function switchCamera() {
+            if (!localStream) return;
+            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            
+            // Mirror local video if front camera
+            el('localVideo').style.transform = currentFacingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+            
+            // Getting new stream with new facing mode
+            const constraints = { audio: true, video: { facingMode: currentFacingMode } };
+            try {
+                const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                // Replace video track in peer connection
+                const videoTrack = newStream.getVideoTracks()[0];
+                const sender = pc.getSenders().find(s => s.track.kind === 'video');
+                if (sender) {
+                    sender.replaceTrack(videoTrack);
+                }
+                
+                // Update local UI
+                el('localVideo').srcObject = newStream;
+                
+                // Stop old video track
+                localStream.getVideoTracks()[0].stop();
+                
+                // Update local stream reference
+                localStream.removeTrack(localStream.getVideoTracks()[0]);
+                localStream.addTrack(videoTrack);
+                
+            } catch (err) {
+                console.error("Camera switch failed", err);
+                showToast("Could not switch camera.");
+            }
+        }
+
+        function endCall() {
+            resetApp(true);
+        }
+
+        function resetApp(force = false) {
+            if (pc && pc.connectionState === 'connected' && !force) return; // Don't reset if active call unless forced
+            
+            // Clean up everything
+            if (pc) { pc.close(); pc = null; }
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            el('remoteVideo').srcObject = null;
+            el('localVideo').srcObject = null;
+            el('video-wrapper').style.display = 'none';
+
+            hideAllPanels();
+            el('panel-home').classList.remove('hidden-panel');
+            setStatus("Ready", "normal");
+            
+            // Reset states
+            isAudioMuted = false;
+            isVideoOff = false;
+            el('icon-mic-on').classList.remove('hidden');
+            el('icon-mic-off').classList.add('hidden');
+            el('btn-audio').classList.remove('border-red-500');
+            el('icon-cam-on').classList.remove('hidden');
+            el('icon-cam-off').classList.add('hidden');
+            el('btn-video').classList.remove('border-red-500');
+        }
+
+    </script>
+</body>
+</html>

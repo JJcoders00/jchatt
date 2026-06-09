@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jchatt - Login</title>
+    <link rel="icon" type="image/png" href="../icon-192.png">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="install-icon-wrapper" style="text-align: center;">
+            <img src="/icon-192.png" alt="Logo" class="install-app-icon" style="width: 64px; height: 64px; margin-bottom: 8px;">
+        </div>
+        <h1>Welcome to Jchatt</h1>
+        <form id="login-form">
+            <div class="input-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required placeholder="Enter your email">
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required placeholder="Enter your password">
+            </div>
+            <div id="error-message" class="error-msg"></div>
+            <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+        
+        <div style="margin: 20px 0; color: var(--text-muted); font-size: 14px;">OR</div>
+        
+        <button id="google-login" class="btn btn-google" type="button">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+            Continue with Google
+        </button>
+        
+        <div class="auth-links">
+            Don't have an account? <a href="../signup/">Sign up</a>
+        </div>
+    </div>
+
+    <!-- IndexedDB Library (needed by auth.js → db.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.js"></script>
+
+    <script type="module" src="../js/auth.js"></script>
+</body>
+</html>

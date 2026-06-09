@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3QP6ETC00H"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-3QP6ETC00H');
+    </script>
+    
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <title>Jchatt - The Ultimate Free Real-time Messenger by JJ Coders</title>
+    
+    <meta name="description" content="Join Jchatt, the premium real-time messenger by JJ Coders. Send free messages and photos with high-end glassmorphism design. The best free WhatsApp alternative for web and mobile.">
+    <meta name="keywords" content="Jchatt, Jchat, JJ Coders, Free Messenger, WhatsApp Alternative, Chat App, Real-time messaging, Web Chat, Mobile Messenger, Private Chat, Animated Messenger, No Download Chat">
+    <meta name="author" content="JJ Coders">
+    <link rel="canonical" href="https://jchatt-your-url.web.app/">
+
+    <!-- Social Media Previews -->
+    <meta property="og:title" content="Jchatt - Premium Real-time Messaging | JJ Coders">
+    <meta property="og:description" content="Experience Jchatt, the ultra-fast messenger with custom themes and mobile-first design. Built by JJ Coders for global connectivity.">
+    <meta property="og:image" content="/icon-512.png">
+    <meta property="og:url" content="https://jchatt-your-url.web.app/">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Jchatt Messenger">
+    <meta name="twitter:description" content="The sleekest free chat app on the web. Try Jchatt by JJ Coders.">
+    <meta name="twitter:image" content="/icon-512.png">
+
+    <!-- Mobile App Settings -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/manifest.json?v=1.1">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    
+    <script>
+        // Service Worker Registration for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js?v=3').then(reg => {
+                  console.log('Jchatt SW registered (React P2P edition)');
+                }).catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
+  </body>
+</html>

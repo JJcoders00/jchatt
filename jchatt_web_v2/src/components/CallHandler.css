@@ -1,0 +1,314 @@
+/* Ultra-Premium Glassmorphism Call Interface */
+.call-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 50%, rgba(30, 30, 40, 0.9), rgba(10, 10, 12, 0.98));
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  color: white;
+  animation: fadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.call-box {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.incoming {
+  justify-content: center;
+  gap: 24px;
+}
+
+.caller-avatar {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00F2FE, #4FACFE);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  font-weight: 700;
+  box-shadow: 0 10px 40px rgba(79, 172, 254, 0.5);
+  margin-bottom: 24px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+}
+
+.pulse {
+  animation: pulse-ring 2.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+.caller-name {
+  font-size: 2.8rem;
+  font-weight: 600;
+  margin: 0;
+  text-shadow: 0 4px 15px rgba(0,0,0,0.6);
+  letter-spacing: -0.5px;
+}
+
+.call-type {
+  font-size: 1.2rem;
+  color: #c0c0c0;
+  margin-bottom: 60px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.call-actions {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+
+.fab {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  color: white;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+}
+
+.fab:hover {
+  transform: scale(1.08) translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+}
+
+.fab:active {
+  transform: scale(0.95);
+}
+
+.fab-accept {
+  background: linear-gradient(135deg, #34C759, #28A745);
+  animation: bounce-soft 2s infinite;
+}
+
+.fab-decline {
+  background: linear-gradient(135deg, #FF3B30, #DC3545);
+}
+
+.fab-control {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fab-control.muted {
+  background: white;
+  color: #1c1c1e;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+}
+
+/* Video grid */
+.video-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  z-index: -1;
+}
+
+.remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.local-video {
+  position: absolute;
+  top: 40px;
+  right: 24px;
+  width: 140px;
+  height: 210px;
+  border-radius: 20px;
+  object-fit: cover;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+.local-video:hover {
+  transform: scale(1.05);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.call-header.top {
+  position: absolute;
+  top: 60px;
+  text-align: center;
+  width: 100%;
+}
+
+.status-text {
+  font-size: 1.3rem;
+  font-weight: 500;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 10px 24px;
+  border-radius: 30px;
+  display: inline-block;
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  letter-spacing: 1px;
+}
+
+.call-actions.bottom {
+  position: absolute;
+  bottom: 80px;
+  width: 100%;
+  justify-content: center;
+  gap: 35px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(1.05); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(79, 172, 254, 0.7); }
+  70% { box-shadow: 0 0 0 50px rgba(79, 172, 254, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(79, 172, 254, 0); }
+}
+
+@keyframes bounce-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); box-shadow: 0 15px 35px rgba(40, 167, 69, 0.6); }
+}
+
+/* WhatsApp Audio UI */
+.call-overlay.audio-only-mode {
+  background: #111e25;
+  animation: none;
+}
+
+.whatsapp-audio {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  justify-content: flex-start;
+  padding-top: 60px;
+}
+
+.wa-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #8696a0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.whatsapp-audio .caller-name {
+  font-size: 2.2rem;
+  font-weight: 400;
+  color: #e9edef;
+  margin-bottom: 8px;
+  text-shadow: none;
+}
+
+.whatsapp-audio .call-type {
+  font-size: 1rem;
+  color: #8696a0;
+  margin-bottom: 50px;
+  letter-spacing: normal;
+  text-transform: none;
+  font-weight: normal;
+}
+
+.whatsapp-audio .caller-avatar {
+  width: 140px;
+  height: 140px;
+  font-size: 50px;
+  border-radius: 50%;
+  background: #00a884;
+  color: white;
+  margin-top: 10px;
+  box-shadow: none;
+  border: none;
+}
+
+.wa-actions {
+  flex-direction: column !important;
+  gap: 40px !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  border-top: none !important;
+  bottom: 50px !important;
+}
+
+.wa-buttons-row {
+  display: flex;
+  justify-content: space-evenly;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.wa-btn-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.wa-btn-container span {
+  color: #e9edef;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.fab-wa {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid #8696a0;
+  color: #e9edef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fab-wa:active {
+  background: rgba(255,255,255,0.1);
+}
+
+.fab-wa.muted {
+  background: rgba(255,255,255,0.8);
+  color: #111e25;
+}
+
+.wa-decline {
+  width: 64px !important;
+  height: 64px !important;
+  margin-top: 10px;
+  background: #f15c6d !important;
+  box-shadow: none !important;
+}
+

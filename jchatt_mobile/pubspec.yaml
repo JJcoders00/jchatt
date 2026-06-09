@@ -1,0 +1,63 @@
+name: jchatt_mobile
+description: "Jchatt — Premium Real-time Messenger by JJ Coders"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  
+  # Firebase
+  firebase_core: ^3.12.1
+  firebase_auth: ^5.6.5
+  firebase_database: ^11.3.1
+  firebase_messaging: ^15.2.10
+  
+  # Google Sign In
+  google_sign_in: ^6.3.0
+  
+  # Local Storage
+  sqflite: ^2.4.2
+  path: ^1.9.1
+  shared_preferences: ^2.5.3
+  
+  # Image Picking
+  image_picker: ^1.1.2
+  
+  # UUID generation
+  uuid: ^4.5.1
+  
+  # Notifications
+  flutter_local_notifications: ^19.0.0
+  
+  # Vibration/haptic feedback already in flutter
+  
+  # Provider for state management
+  provider: ^6.1.5
+  
+  # URL launcher
+  url_launcher: ^6.3.1
+  
+  # Cached network image + avatars
+  cached_network_image: ^3.4.1
+  
+  # Intl for date formatting
+  intl: ^0.20.2
+  
+  # Permission handler
+  permission_handler: ^11.4.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/

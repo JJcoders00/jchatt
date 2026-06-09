@@ -1,0 +1,75 @@
+.statuses-row {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px 0 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.statuses-row::-webkit-scrollbar {
+  display: none;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  width: 60px;
+}
+
+.status-avatar-wrapper {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  padding: 2px;
+  background: var(--bg-glass);
+}
+
+.status-avatar-wrapper.has-status {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+
+.status-avatar-wrapper img, .status-avatar-wrapper .placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--bg-primary);
+}
+
+.status-avatar-wrapper .placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  background: var(--bg-glass);
+  color: white;
+}
+
+.add-status-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: var(--accent-primary);
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-primary);
+}
+
+.status-item span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: center;
+}

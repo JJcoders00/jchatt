@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "306552756545",
+    "project_id": "jjcodersjchatt",
+    "storage_bucket": "jjcodersjchatt.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:306552756545:android:f7cf551b8560b77b5ca9c0",
+        "android_client_info": {
+          "package_name": "com.jjcoders.jchatt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkISiLKl_1XuY66Y52rLoryKL8m9J7BK8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
