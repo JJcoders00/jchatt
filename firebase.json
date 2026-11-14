@@ -9,7 +9,7 @@
     ],
     "rewrites": [
       {
-        "source": "**",
+        "source": "!**/*.@(png|jpg|jpeg|gif|svg|webp|ico|mp3|wav|json|js|css)",
         "destination": "/index.html"
       }
     ]

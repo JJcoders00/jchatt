@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#0a2230"/>
+  <title>JChatt — Private Messenger</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg"/>
+  <link rel="icon" type="image/png" href="./favicon.png"/>
+  <link rel="apple-touch-icon" href="./icon-192.png"/>
+  <link rel="manifest" href="./manifest.json"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&display=swap" media="print" onload="this.media='all'"/>
+  <link rel="stylesheet" href="./styles.css"/>
+</head>
+<body>
+  <div id="app">
+    <div class="studio">
+      <div class="proto">
+        <div class="phone">
+          <div class="scr center" style="background:var(--ink);color:#fff">
+            <img src="./images/mascot/mascot_hero.png" width="112" height="112" alt="JChatt" style="object-fit:contain"/>
+            <div class="wordmark">jchatt</div>
+            <p class="mute">Private by architecture</p>
+            <div class="load"><i></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="ts" role="status" aria-live="polite"></div>
+  <input id="file-photo" type="file" accept="image/*" hidden/>
+  <input id="file-doc" type="file" hidden/>
+
+  <script src="./vendor/firebase-app-compat.js"></script>
+  <script src="./vendor/firebase-auth-compat.js"></script>
+  <script src="./vendor/firebase-database-compat.js"></script>
+  <script src="./js/crypto-and-assets.js"></script>
+  <script src="./js/firebase-engine.js"></script>
+  <script src="./js/screens-core.js"></script>
+  <script src="./js/screens-extra.js"></script>
+  <script src="./js/landing-page.js"></script>
+  <script src="./js/web-and-app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(function () {});
+    }
+  </script>
+</body>
+</html>

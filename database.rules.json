@@ -4,6 +4,41 @@
     ".write": "auth != null",
     "users": {
       ".indexOn": ["email"]
+    },
+    "v2": {
+      "handles": {
+        ".indexOn": ["uid"]
+      },
+      "messages": {
+        "$chatId": {
+          ".indexOn": ["ts"]
+        }
+      },
+      "userChats": {
+        "$uid": {
+          ".indexOn": ["lastTs"]
+        }
+      },
+      "statuses": {
+        ".indexOn": ["ts"]
+      },
+      "calls": {
+        "$uid": {
+          ".indexOn": ["ts"]
+        }
+      },
+      "pairings": {
+        "$pairId": {
+          ".read": true,
+          ".write": "auth != null"
+        }
+      },
+      "invites": {
+        "$token": {
+          ".read": true,
+          ".write": "auth != null"
+        }
+      }
     }
   }
 }
