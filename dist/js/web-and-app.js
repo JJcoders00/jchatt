@@ -1589,6 +1589,28 @@
       var Plugins = (Cap && Cap.Plugins) || global.Plugins;
       var AppPlugin = Plugins && (Plugins.App || (Cap && Cap.Plugins && Cap.Plugins.App));
       if (AppPlugin && AppPlugin.addListener) {
+        AppPlugin.addListener('backButton', function () {
+          if (LV.wmodal) {
+            LV.wmodal = null;
+            render();
+            return;
+          }
+          if (LV.mediaViewer || LV.attachDrawer) {
+            LV.mediaViewer = null;
+            LV.attachDrawer = false;
+            render();
+            return;
+          }
+          if (LV.curChatId || LV.route === 'chat') {
+            go('inbox', 'pop');
+            return;
+          }
+          if (LV.route !== 'inbox' && LV.route !== 'landing' && LV.route !== 'splash' && LV.route !== 'welcome') {
+            go('inbox', 'pop');
+            return;
+          }
+          if (AppPlugin.exitApp) AppPlugin.exitApp();
+        });
         AppPlugin.addListener('appStateChange', function (state) {
           if (!state.isActive) {
             if (LV.settings.appLock || LV.settings.biometric) {
@@ -1602,6 +1624,14 @@
           }
         });
       }
+    } catch (e) {}
+
+    try {
+      document.addEventListener('click', function () {
+        if (global.Notification && Notification.permission === 'default' && Notification.requestPermission) {
+          Notification.requestPermission().catch(function () {});
+        }
+      }, { once: true });
     } catch (e) {}
     try {
       if (global.JCSOUND) {
@@ -1667,19 +1697,6 @@
 
       if (reason === 'messages') {
         if (LV.settings.soundEffects && global.JCSOUND) global.JCSOUND.playMsgReceived();
-        if (global.JCSOUND && LV.settings.notifications) {
-          // If message arrived and app is in background or another chat is open
-          var cId = LV.curChatId;
-          var curChatMsgs = cId ? (JFE.messagesByChat[cId] || {}) : {};
-          var latestList = Object.keys(curChatMsgs).map(function(k) { return curChatMsgs[k]; });
-          latestList.sort(function(a,b){ return (b.ts||0) - (a.ts||0); });
-          var newest = latestList[0];
-          if (newest && newest.from !== JFE.uid && (Date.now() - (newest.ts || 0) < 5000)) {
-            var senderName = newest.fromName || 'New Message';
-            var txt = newest.text || (newest.kind === 'photo' ? 'Photo' : 'New encrypted message');
-            global.JCSOUND.sendNotification(senderName, txt);
-          }
-        }
       }
 
       cancelAnimationFrame(renderRaf);

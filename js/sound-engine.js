@@ -196,15 +196,22 @@
       var Cap = global.Capacitor;
       var Plugins = (Cap && Cap.Plugins) || global.Plugins;
       var LN = Plugins && (Plugins.LocalNotifications || (Cap && Cap.Plugins && Cap.Plugins.LocalNotifications));
-      if (LN && LN.createChannel) {
-        LN.createChannel({
-          id: 'jchatt_messages',
-          name: 'JChatt Messages',
-          description: 'Encrypted message alerts',
-          importance: 5,
-          visibility: 1,
-          vibration: true
-        }).catch(function () {});
+      if (LN) {
+        if (LN.requestPermissions) {
+          LN.requestPermissions().catch(function () {});
+        }
+        if (LN.createChannel) {
+          LN.createChannel({
+            id: 'jchatt_messages',
+            name: 'JChatt Messages',
+            description: 'Encrypted message alerts',
+            importance: 5,
+            visibility: 1,
+            vibration: true,
+            lights: true,
+            lightColor: '#00a884'
+          }).catch(function () {});
+        }
       }
     } catch (e) {}
   }
@@ -225,6 +232,18 @@
         }).catch(function (err) {
           console.log('ForegroundService start err:', err);
         });
+      }
+    } catch (e) {}
+  }
+
+  function fallbackWebNotification(title, opts) {
+    try {
+      if (global.Notification && Notification.permission === 'granted') {
+        var n = new Notification(title, opts);
+        n.onclick = function () {
+          try { global.focus(); } catch (e) {}
+          n.close();
+        };
       }
     } catch (e) {}
   }
@@ -251,29 +270,29 @@
       }
     } catch (err) {}
 
-    // 2. Standard Web & PWA Notification API
+    // 2. Standard Web & ServiceWorker PWA Notification API
     try {
-      if (global.Notification) {
-        if (Notification.permission === 'granted') {
-          var n = new Notification(title, {
-            body: body || '',
-            icon: icon || './favicon.svg',
-            badge: './favicon.svg'
-          });
-          n.onclick = function () {
-            global.focus();
-            n.close();
-          };
-        } else if (Notification.permission === 'default' && Notification.requestPermission) {
-          Notification.requestPermission().then(function (perm) {
-            if (perm === 'granted') {
-              new Notification(title, {
-                body: body || '',
-                icon: icon || './favicon.svg'
-              });
-            }
-          }).catch(function () {});
-        }
+      var notifTitle = title || 'JChatt';
+      var notifOpts = {
+        body: body || '',
+        icon: icon || './favicon.svg',
+        badge: './favicon.svg',
+        vibrate: [200, 100, 200]
+      };
+      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+        navigator.serviceWorker.ready.then(function (reg) {
+          if (reg && reg.showNotification) {
+            reg.showNotification(notifTitle, notifOpts).catch(function () {
+              fallbackWebNotification(notifTitle, notifOpts);
+            });
+          } else {
+            fallbackWebNotification(notifTitle, notifOpts);
+          }
+        }).catch(function () {
+          fallbackWebNotification(notifTitle, notifOpts);
+        });
+      } else {
+        fallbackWebNotification(notifTitle, notifOpts);
       }
     } catch (e) {}
   }

@@ -1303,6 +1303,7 @@
       var presRef = Engine.db.ref('v2/users/' + uid);
       presRef.update({ online: true, lastSeen: firebase.database.ServerValue.TIMESTAMP }).catch(function () {});
 
+      var _hasLoadedInitialChats = false;
       Engine._userChatsRef = Engine.db.ref('v2/userChats/' + uid).orderByChild('lastTs');
       Engine._userChatsRef.on('value', function (snap) {
         var oldChats = Engine.chats || {};
@@ -1314,15 +1315,18 @@
             Engine.db.ref('v2/messages/' + cId + '/' + ch.lastMsgId + '/deliveredTo/' + uid).set(true).catch(function () {});
             // Notify if new message arrived
             var prevChat = oldChats[cId];
-            if (!prevChat || prevChat.lastMsgId !== ch.lastMsgId) {
-              if (global.JCSOUND && (Date.now() - (ch.lastTs || 0) < 60000)) {
-                var sName = ch.name || ch.handle || 'New Message';
-                var sBody = ch.lastText || 'New encrypted message';
+            var isNewMsg = _hasLoadedInitialChats && (!prevChat || prevChat.lastMsgId !== ch.lastMsgId);
+            if (isNewMsg) {
+              var sName = ch.name || ch.handle || 'New Message';
+              var sBody = ch.lastText || 'New encrypted message';
+              if (global.JCSOUND) {
                 global.JCSOUND.sendNotification(sName, sBody);
+                global.JCSOUND.playMsgReceived();
               }
             }
           }
         });
+        _hasLoadedInitialChats = true;
         Engine.chats = newChats;
         if (Engine._activeChatId && Engine.chats[Engine._activeChatId] && Engine.chats[Engine._activeChatId].unread > 0) {
           Engine.chats[Engine._activeChatId].unread = 0;

@@ -1,8 +1,16 @@
 package com.jjcoders.jchatt;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ServiceInfo;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import androidx.annotation.NonNull;
 import androidx.biometric.BiometricManager;
@@ -17,7 +25,10 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
+import java.util.ArrayList;
 import java.util.concurrent.Executor;
+
+import io.capawesome.capacitorjs.plugins.foregroundservice.AndroidForegroundService;
 
 public class MainActivity extends BridgeActivity {
     private PowerManager.WakeLock wakeLock;
@@ -27,11 +38,72 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(BiometricAuthPlugin.class);
         super.onCreate(savedInstanceState);
 
+        // 1. WhatsApp Luxury Native Status & Nav Bar Theming
+        try {
+            Window window = getWindow();
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.setStatusBarColor(Color.parseColor("#0b141a"));
+            window.setNavigationBarColor(Color.parseColor("#0b141a"));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                View decor = window.getDecorView();
+                decor.setSystemUiVisibility(decor.getSystemUiVisibility() & ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            }
+        } catch (Exception ignored) {}
+
+        // 2. Persistent Wake Lock for CPU Background Keepalive
         try {
             PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
             if (powerManager != null) {
                 wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "JChatt::BackgroundSync");
                 wakeLock.setReferenceCounted(false);
+            }
+        } catch (Exception ignored) {}
+
+        // 3. Native Background Service Auto-Start (Guarantees 24/7 background calls and messages)
+        startNativeForegroundSync();
+    }
+
+    public void startNativeForegroundSync() {
+        try {
+            Context context = getApplicationContext();
+            String channelId = "jchatt_sync_channel";
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                NotificationChannel channel = new NotificationChannel(
+                    channelId,
+                    "JChatt Background Service",
+                    NotificationManager.IMPORTANCE_LOW
+                );
+                channel.setDescription("Keeps secure calls and messages connected in background");
+                channel.setShowBadge(false);
+                NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                if (nm != null) {
+                    nm.createNotificationChannel(channel);
+                }
+            }
+
+            Intent serviceIntent = new Intent(context, AndroidForegroundService.class);
+            Bundle notifBundle = new Bundle();
+            notifBundle.putString("title", "JChatt Sovereign Messenger");
+            notifBundle.putString("body", "Connected for secure calls & messages");
+            notifBundle.putInt("id", 7771);
+            notifBundle.putInt("icon", R.drawable.ic_launcher);
+            notifBundle.putBoolean("silent", true);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                notifBundle.putInt("serviceType", ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+            } else {
+                notifBundle.putInt("serviceType", 0);
+            }
+            notifBundle.putParcelableArrayList("buttons", new ArrayList<Bundle>());
+
+            serviceIntent.putExtra("notification", notifBundle);
+            serviceIntent.putExtra("channelId", channelId);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ContextCompat.startForegroundService(context, serviceIntent);
+            } else {
+                context.startService(serviceIntent);
             }
         } catch (Exception ignored) {}
     }
@@ -45,7 +117,7 @@ public class MainActivity extends BridgeActivity {
                 bridge.getWebView().resumeTimers();
             }
             if (wakeLock != null && !wakeLock.isHeld()) {
-                wakeLock.acquire(10 * 60 * 1000L); // 10 minutes wake lock per background cycle
+                wakeLock.acquire(30 * 60 * 1000L); // 30 minutes wake lock per background cycle
             }
         } catch (Exception ignored) {}
     }
