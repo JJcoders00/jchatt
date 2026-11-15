@@ -1863,6 +1863,8 @@
     ACT: ACT,
     handleNativeBack: global.handleNativeBack
   };
+  global.go = go;
+  global.LV = LV;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
