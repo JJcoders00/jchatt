@@ -74,7 +74,7 @@
       if (_savedAcc) return _savedAcc;
       try { return JSON.parse(localStorage.getItem('jchatt_cache_me') || 'null'); } catch (e) { return null; }
     })(),
-    connected: false,
+    connected: (typeof navigator !== 'undefined' && navigator.onLine) ? true : false,
     ready: false,
     listeners: new Set(),
 

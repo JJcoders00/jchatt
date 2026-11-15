@@ -65,6 +65,7 @@ public class JChattSyncService extends Service {
     public void onCreate() {
         super.onCreate();
         createNotificationChannels();
+        startOngoingForeground();
 
         try {
             PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
@@ -259,6 +260,22 @@ public class JChattSyncService extends Service {
             conn.connect();
 
             int code = conn.getResponseCode();
+            if (code == 401 || code == 403) {
+                // Token expired! Remove invalid token and reconnect with public read (.read: true)
+                prefs.edit().remove("sync_token").apply();
+                refreshTokenFromSavedCredentials();
+
+                conn.disconnect();
+                url = new URL("https://jjcodersjchatt-default-rtdb.firebaseio.com/v2/userChats/" + uid + ".json");
+                conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestProperty("Accept", "text/event-stream");
+                conn.setRequestProperty("User-Agent", "JChattNativeSync/2.0");
+                conn.setConnectTimeout(30000);
+                conn.setReadTimeout(0);
+                conn.connect();
+                code = conn.getResponseCode();
+            }
+
             if (code != 200) {
                 Thread.sleep(5000);
                 return;
@@ -289,6 +306,49 @@ public class JChattSyncService extends Service {
             try { if (reader != null) reader.close(); } catch (Exception ignored) {}
             try { if (conn != null) conn.disconnect(); } catch (Exception ignored) {}
         }
+    }
+
+    private void refreshTokenFromSavedCredentials() {
+        try {
+            SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+            String savedJson = prefs.getString("saved_account_json", null);
+            if (savedJson == null || savedJson.trim().isEmpty()) return;
+            JSONObject acc = new JSONObject(savedJson);
+            String email = acc.optString("email", "");
+            String password = acc.optString("password", "");
+            if (email.isEmpty() || password.isEmpty()) return;
+
+            URL authUrl = new URL("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyDkISiLKl_1XuY66Y52rLoryKL8m9J7BK8");
+            HttpURLConnection authConn = (HttpURLConnection) authUrl.openConnection();
+            authConn.setRequestMethod("POST");
+            authConn.setRequestProperty("Content-Type", "application/json");
+            authConn.setDoOutput(true);
+            authConn.setConnectTimeout(10000);
+            authConn.setReadTimeout(10000);
+
+            JSONObject req = new JSONObject();
+            req.put("email", email);
+            req.put("password", password);
+            req.put("returnSecureToken", true);
+
+            try (OutputStream os = authConn.getOutputStream()) {
+                os.write(req.toString().getBytes(StandardCharsets.UTF_8));
+            }
+
+            if (authConn.getResponseCode() == 200) {
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(authConn.getInputStream(), StandardCharsets.UTF_8))) {
+                    StringBuilder sb = new StringBuilder();
+                    String l;
+                    while ((l = br.readLine()) != null) sb.append(l);
+                    JSONObject res = new JSONObject(sb.toString());
+                    String idToken = res.optString("idToken", "");
+                    if (!idToken.isEmpty()) {
+                        prefs.edit().putString("sync_token", idToken).apply();
+                    }
+                }
+            }
+            authConn.disconnect();
+        } catch (Exception ignored) {}
     }
 
     private void handleSseData(String uid, String event, String jsonStr, boolean isInitial) {
@@ -371,8 +431,12 @@ public class JChattSyncService extends Service {
                 // 2. Notification gating:
                 SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
                 long lastNotifiedTs = prefs.getLong("last_notified_ts", 0L);
+                if (lastNotifiedTs == 0L) {
+                    lastNotifiedTs = System.currentTimeMillis() - 120000L; // 2 minutes window
+                    prefs.edit().putLong("last_notified_ts", lastNotifiedTs).apply();
+                }
 
-                boolean isNew = !seenMessageIds.contains(lastMsgId) && (lastTs > lastNotifiedTs || !isInitial);
+                boolean isNew = !seenMessageIds.contains(lastMsgId) && (lastTs >= lastNotifiedTs || !isInitial);
 
                 if (isNew) {
                     seenMessageIds.add(lastMsgId);
@@ -380,11 +444,8 @@ public class JChattSyncService extends Service {
                         prefs.edit().putLong("last_notified_ts", lastTs).apply();
                     }
                     showNativeMessageNotification(chatId, senderName, lastText);
-                } else if (isInitial) {
+                } else {
                     seenMessageIds.add(lastMsgId);
-                    if (lastTs > lastNotifiedTs) {
-                        prefs.edit().putLong("last_notified_ts", lastTs).apply();
-                    }
                 }
             }
         } catch (Exception ignored) {}
@@ -395,24 +456,38 @@ public class JChattSyncService extends Service {
             try {
                 SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
                 String token = prefs.getString("sync_token", null);
-                String urlStr = "https://jjcodersjchatt-default-rtdb.firebaseio.com/v2/messages/" + chatId + "/" + msgId + "/deliveredTo/" + uid + ".json";
-                if (token != null && !token.trim().isEmpty()) {
-                    urlStr += "?auth=" + token.trim();
+                boolean ok = tryPutDelivery(chatId, msgId, uid, token);
+                // If auth failed (e.g. expired token), retry without token since rule allows public write to deliveredTo/$uid
+                if (!ok && token != null) {
+                    tryPutDelivery(chatId, msgId, uid, null);
                 }
-
-                URL url = new URL(urlStr);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("PUT");
-                conn.setRequestProperty("Content-Type", "application/json");
-                conn.setDoOutput(true);
-                conn.setConnectTimeout(8000);
-                try (OutputStream os = conn.getOutputStream()) {
-                    os.write("true".getBytes(StandardCharsets.UTF_8));
-                }
-                conn.getResponseCode();
-                conn.disconnect();
             } catch (Exception ignored) {}
         }).start();
+    }
+
+    private boolean tryPutDelivery(String chatId, String msgId, String uid, String token) {
+        try {
+            String urlStr = "https://jjcodersjchatt-default-rtdb.firebaseio.com/v2/messages/" + chatId + "/" + msgId + "/deliveredTo/" + uid + ".json";
+            if (token != null && !token.trim().isEmpty()) {
+                urlStr += "?auth=" + token.trim();
+            }
+
+            URL url = new URL(urlStr);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("PUT");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(8000);
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write("true".getBytes(StandardCharsets.UTF_8));
+            }
+            int code = conn.getResponseCode();
+            conn.disconnect();
+            return (code >= 200 && code < 300);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void showNativeMessageNotification(String chatId, String sender, String text) {

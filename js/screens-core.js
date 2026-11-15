@@ -722,9 +722,9 @@
         }
       }
 
-      var statusBanner = Engine.connected
-        ? ''
-        : '<div class="banner"><span class="spin"></span><span>Connecting to JChatt cloud...</span></div>';
+      var statusBanner = (typeof navigator !== 'undefined' && !navigator.onLine)
+        ? '<div class="banner" style="background:#475569;color:#fff;padding:8px 16px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600"><span class="spin"></span><span>Waiting for network...</span></div>'
+        : '';
 
       var notifBanner = '';
       if (typeof Notification !== 'undefined' && Notification.permission === 'default') {

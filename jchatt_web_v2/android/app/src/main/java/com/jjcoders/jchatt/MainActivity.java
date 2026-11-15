@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
@@ -65,6 +66,18 @@ public class MainActivity extends BridgeActivity {
 
         // 3. Android 13+ (API 33+) Runtime POST_NOTIFICATIONS Permission (WhatsApp & Telegram Standard)
         requestNotificationPermissionIfNeeded();
+
+        // 3b. Request Battery Optimization Exemption for Telegram-style 100% background delivery
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                if (pm != null && !pm.isIgnoringBatteryOptimizations(getPackageName())) {
+                    Intent bIntent = new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                    bIntent.setData(Uri.parse("package:" + getPackageName()));
+                    startActivity(bIntent);
+                }
+            }
+        } catch (Exception ignored) {}
 
         // 4. Native Hardware Back Button Handler (WhatsApp Standard Behavior)
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
