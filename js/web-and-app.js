@@ -558,6 +558,28 @@
       }
       go('secure-device', 'push');
     },
+    add_new_account: function () {
+      LV.draftCreate.handle = '';
+      LV.draftCreate.name = '';
+      LV.draftCreate.error = '';
+      go('create-id', 'push');
+    },
+    switch_account: async function (el) {
+      var targetUid = el.getAttribute('data-uid');
+      var allAcc = [];
+      try { allAcc = JSON.parse(localStorage.getItem('jchatt_all_accounts') || '[]'); } catch (e) {}
+      var found = allAcc.find(function (a) { return a.uid === targetUid; });
+      if (found) {
+        toast('Switching to ' + (found.name || found.handle) + '...');
+        var res = await JFE.restoreAccount(found.handle, found.phrase || found.phraseStr);
+        if (res.ok) {
+          toast('Switched account: ' + (found.name || found.handle));
+          go('chats', 'tab');
+        } else {
+          toast('Could not switch: ' + (res.message || 'Auth error'));
+        }
+      }
+    },
     rtab: function (el) {
       LV.draftRestore.tab = el.getAttribute('data-v');
       LV.draftRestore.error = '';
@@ -1250,9 +1272,10 @@
         LV.calcOp = k;
         LV.calcReset = true;
       } else if (k === '=') {
-        if (LV.calcDisplay === '314159') {
+        var secretCalc = LV.calcDisplay.trim();
+        if (secretCalc === '314159' || secretCalc === '777' || secretCalc === '1337' || secretCalc === (LV.settings.appLockPin || '')) {
           LV.calcDisplay = '0';
-          toast('JChatt unlocked');
+          toast('Disguise Morphed · Welcome to JChatt');
           go('chats', 'push');
           return;
         }
@@ -1283,8 +1306,20 @@
       unlockTapReset = setTimeout(function () { unlockTapCount = 0; }, 1200);
       if (unlockTapCount >= 2) {
         unlockTapCount = 0;
-        toast('JChatt unlocked');
+        toast('Disguise Morphed · Welcome to JChatt');
         go('chats', 'push');
+      }
+    },
+    submit_fake_ai: function () {
+      var inEl = document.getElementById('fake-ai-input');
+      var txt = (inEl ? inEl.value : '').trim().toLowerCase();
+      if (txt === 'open jchatt' || txt === 'jchatt' || txt === 'unlock' || txt === 'secret' || txt === 'open') {
+        if (inEl) inEl.value = '';
+        toast('Disguise Morphed · Welcome to JChatt');
+        go('chats', 'push');
+      } else {
+        toast('AI: Processing request offline...');
+        if (inEl) inEl.value = '';
       }
     },
     tg: function (el) {

@@ -873,12 +873,39 @@
     'settings': function () {
       var me = global.JFE.me || {};
       var s = LV.settings;
+      var multiAcc = [];
+      try {
+        multiAcc = JSON.parse(localStorage.getItem('jchatt_all_accounts') || '[]');
+      } catch (e) {}
+
+      var accountSwitcherHtml = '';
+      if (multiAcc.length > 0) {
+        accountSwitcherHtml = '<div class="card" style="margin:0 0 12px;background:var(--in);border-color:var(--line)">'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">'
+          + '<b style="font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)">Saved Accounts (' + (multiAcc.length) + ')</b>'
+          + '<button class="pill" style="background:var(--lime);color:var(--ink);font-weight:700" data-act="add_new_account">+ Add Account</button>'
+          + '</div>'
+          + multiAcc.map(function (acc) {
+            var isCurrent = acc.uid === me.uid || acc.handle === me.handle;
+            return '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;' + (isCurrent ? 'font-weight:700;' : 'opacity:0.85;') + '">'
+              + av(acc.handle || 'user', 36, acc.avatar, true)
+              + '<div style="flex:1;min-width:0">'
+              + '<div style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + E(acc.name || acc.handle) + (isCurrent ? ' <span style="font-size:11px;color:var(--lime-d)">● Active</span>' : '') + '</div>'
+              + '<div style="font-size:12px;color:var(--mute)">' + E(acc.handle) + '</div>'
+              + '</div>'
+              + (!isCurrent ? '<button class="pill" data-act="switch_account" data-uid="' + E(acc.uid) + '" style="font-weight:700">Switch</button>' : '')
+              + '</div>';
+          }).join('')
+          + '</div>';
+      }
+
       return '<div class="scr">'
         + hdr('<span class="ttl big">You</span>', me.handle || '', '', rb('qr', 'data-go="my-qr"'))
         + '<div class="body pad">'
         + '<div class="card" style="margin:0 0 12px">'
         + row(av(me.handle || 'me', 54, me.avatar, true), E(me.name || me.handle || 'Account'), E(me.bio || 'Available on JChatt') + ' · ' + E(me.handle || ''), I('edit', 17), 'data-go="profile-edit"')
         + '</div>'
+        + accountSwitcherHtml
         + '<div class="gr2" style="padding:0;margin-bottom:12px">'
         + '<button style="background:#fff" data-go="appearance">' + ico('palette', 'lime') + '<b>Appearance</b><span style="font-size:11px;color:var(--mute)">' + (s.darkMode ? 'Dark' : 'Light') + ' · ' + E(s.theme) + '</span></button>'
         + '<button style="background:#fff" data-go="privacy-settings">' + ico('lock', 'ink') + '<b>Privacy</b><span style="font-size:11px;color:var(--mute)">Locks & receipts</span></button>'

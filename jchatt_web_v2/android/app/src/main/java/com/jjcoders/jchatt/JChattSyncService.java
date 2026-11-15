@@ -19,6 +19,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.RemoteInput;
 
 import org.json.JSONObject;
 
@@ -34,9 +35,12 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class JChattSyncService extends Service {
-    public static final String CHANNEL_SYNC_ID = "jchatt_sync_v6";
-    public static final String CHANNEL_MESSAGES_ID = "jchatt_messages_v6";
+    public static final String CHANNEL_SYNC_ID = "jchatt_sync_v7";
+    public static final String CHANNEL_MESSAGES_ID = "jchatt_messages_v7";
     public static final int SYNC_NOTIF_ID = 7771;
+
+    // Luxury WhatsApp Emerald Theme Accent
+    public static final int COLOR_WHATSAPP_EMERALD = Color.parseColor("#00a884");
 
     private PowerManager.WakeLock wakeLock;
     private volatile boolean isRunning = false;
@@ -79,10 +83,10 @@ public class JChattSyncService extends Service {
             // 1. Silent keepalive sync channel (IMPORTANCE_MIN suppresses status bar icon completely)
             NotificationChannel syncChannel = new NotificationChannel(
                 CHANNEL_SYNC_ID,
-                "JChatt Background Service",
+                "JChatt Background Sync",
                 NotificationManager.IMPORTANCE_MIN
             );
-            syncChannel.setDescription("Maintains secure socket for incoming calls & messages");
+            syncChannel.setDescription("Keeps secure background connection open for incoming messages & calls");
             syncChannel.setShowBadge(false);
             syncChannel.setSound(null, null);
             syncChannel.enableVibration(false);
@@ -100,7 +104,7 @@ public class JChattSyncService extends Service {
             msgChannel.setVibrationPattern(new long[]{0, 280, 140, 280});
             msgChannel.setShowBadge(true);
             msgChannel.enableLights(true);
-            msgChannel.setLightColor(Color.GREEN);
+            msgChannel.setLightColor(COLOR_WHATSAPP_EMERALD);
             msgChannel.setBypassDnd(true);
             msgChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
 
@@ -128,6 +132,7 @@ public class JChattSyncService extends Service {
             .setContentTitle("JChatt")
             .setContentText("Background service active")
             .setSmallIcon(R.drawable.ic_notification)
+            .setColor(COLOR_WHATSAPP_EMERALD)
             .setContentIntent(pi)
             .setOngoing(true)
             .setSilent(true)
@@ -300,7 +305,6 @@ public class JChattSyncService extends Service {
                 markDeliveredInFirebase(chatId, lastMsgId, uid);
 
                 // 2. Notification gating:
-                // Check SharedPreferences for persistent last_notified_ts
                 SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
                 long lastNotifiedTs = prefs.getLong("last_notified_ts", 0L);
 
@@ -352,6 +356,9 @@ public class JChattSyncService extends Service {
             NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm == null) return;
 
+            int notifId = (int) (System.currentTimeMillis() % 100000);
+
+            // Intent to open chat in app
             Intent intent = getPackageManager().getLaunchIntentForPackage(getPackageName());
             if (intent == null) intent = new Intent(this, MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -359,19 +366,65 @@ public class JChattSyncService extends Service {
 
             PendingIntent pi = PendingIntent.getActivity(
                 this,
-                (int) System.currentTimeMillis(),
+                notifId,
                 intent,
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? (PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE) : PendingIntent.FLAG_UPDATE_CURRENT
             );
 
+            // Action 1: WhatsApp "Reply" RemoteInput inline action
+            RemoteInput remoteInput = new RemoteInput.Builder(NotificationActionReceiver.EXTRA_VOICE_REPLY)
+                .setLabel("Reply")
+                .build();
+
+            Intent replyIntent = new Intent(this, NotificationActionReceiver.class);
+            replyIntent.setAction(NotificationActionReceiver.ACTION_REPLY);
+            replyIntent.putExtra("chatId", chatId);
+            replyIntent.putExtra("notifId", notifId);
+
+            PendingIntent replyPi = PendingIntent.getBroadcast(
+                this,
+                notifId + 1,
+                replyIntent,
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+                    ? (PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE)
+                    : (PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0))
+            );
+
+            NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(
+                R.drawable.ic_action_reply,
+                "Reply",
+                replyPi
+            ).addRemoteInput(remoteInput).build();
+
+            // Action 2: WhatsApp "Mark as read"
+            Intent readIntent = new Intent(this, NotificationActionReceiver.class);
+            readIntent.setAction(NotificationActionReceiver.ACTION_MARK_READ);
+            readIntent.putExtra("chatId", chatId);
+            readIntent.putExtra("notifId", notifId);
+
+            PendingIntent readPi = PendingIntent.getBroadcast(
+                this,
+                notifId + 2,
+                readIntent,
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? (PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE) : PendingIntent.FLAG_UPDATE_CURRENT
+            );
+
+            NotificationCompat.Action readAction = new NotificationCompat.Action.Builder(
+                R.drawable.ic_action_read,
+                "Mark as read",
+                readPi
+            ).build();
+
             Notification publicVersion = new NotificationCompat.Builder(this, CHANNEL_MESSAGES_ID)
                 .setSmallIcon(R.drawable.ic_notification)
+                .setColor(COLOR_WHATSAPP_EMERALD)
                 .setContentTitle(sender)
                 .setContentText(text)
                 .build();
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_MESSAGES_ID)
                 .setSmallIcon(R.drawable.ic_notification)
+                .setColor(COLOR_WHATSAPP_EMERALD)
                 .setContentTitle(sender)
                 .setContentText(text)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
@@ -379,11 +432,13 @@ public class JChattSyncService extends Service {
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setAutoCancel(true)
                 .setContentIntent(pi)
+                .addAction(replyAction)
+                .addAction(readAction)
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setPublicVersion(publicVersion);
 
-            nm.notify((int) (System.currentTimeMillis() % 100000), builder.build());
+            nm.notify(notifId, builder.build());
         } catch (Exception ignored) {}
     }
 
@@ -400,7 +455,7 @@ public class JChattSyncService extends Service {
             );
             AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             if (am != null) {
-                long triggerAt = System.currentTimeMillis() + 1000;
+                long triggerAt = System.currentTimeMillis() + 800;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
                 } else {
@@ -428,7 +483,7 @@ public class JChattSyncService extends Service {
                 );
                 AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
                 if (am != null) {
-                    long triggerAt = System.currentTimeMillis() + 1500;
+                    long triggerAt = System.currentTimeMillis() + 1000;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
                     } else {

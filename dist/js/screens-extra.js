@@ -231,6 +231,24 @@
         + '</div></div></div>';
     });
 
+    add('fake-ai', function () {
+      return '<div class="scr" style="background:#0f172a;color:#f8fafc">'
+        + hdr('AI Assistant', 'Local Neural Core', '', rb('sparkles', 'data-act="unlocktap"'))
+        + '<div class="body pad nonav" style="display:flex;flex-direction:column">'
+        + '<div class="card" style="background:#1e293b;border-color:#334155;color:#f8fafc;margin:0 0 12px">'
+        + '<b style="color:var(--lime);font-size:14px">Assistant Ready</b>'
+        + '<p style="font-size:13px;margin:6px 0 0;color:#94a3b8">Enter your query or prompt below to interact with the local model.</p>'
+        + '</div>'
+        + '<div style="flex:1;display:flex;flex-direction:column;gap:10px">'
+        + '<div style="background:#1e293b;padding:12px;border-radius:12px;align-self:flex-start;max-width:85%;font-size:13px">How can I assist your workflow today?</div>'
+        + '</div>'
+        + '<div style="display:flex;gap:8px;padding-top:12px">'
+        + '<input id="fake-ai-input" class="in" style="background:#1e293b;border-color:#334155;color:#fff" placeholder="Ask AI or type morph phrase...">'
+        + '<button class="btn ink" style="width:auto;padding:10px 16px" data-act="submit_fake_ai">' + I('send', 17) + '</button>'
+        + '</div>'
+        + '</div></div>';
+    });
+
     // --- 4. Security Systems & Settings Subpages ---
     add('decoy-setup', function () { return SCREENS['secure-device'](); });
     add('break-in', function () {

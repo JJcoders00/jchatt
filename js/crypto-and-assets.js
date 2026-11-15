@@ -576,7 +576,8 @@
   // --- 7. Spec Constants: Disguise, Notifications, Timers, Groups, Domains ---
   var DIS = [
     { id: 'default', name: 'JChatt', app: 'JChatt', sub: 'Visible as JChatt', ic: 'chats', bg: '#0a2230', fg: '#82d82f' },
-    { id: 'calc', name: 'Calculator+', app: 'Calculator+', sub: 'Type 314159 = to unlock', ic: 'calc', bg: '#1e1e1e', fg: '#ff9f0a' },
+    { id: 'calc', name: 'Calculator+', app: 'Calculator+', sub: 'Type 314159 or 777 = to unlock', ic: 'calc', bg: '#1e1e1e', fg: '#ff9f0a' },
+    { id: 'ai', name: 'AI Assistant', app: 'Neural Assistant', sub: 'Type "open jchatt" to unlock', ic: 'sparkles', bg: '#0f172a', fg: '#38bdf8' },
     { id: 'notes', name: 'QuickNotes', app: 'QuickNotes', sub: 'Tap 3 times on title', ic: 'file', bg: '#fff3c4', fg: '#785000' },
     { id: 'weather', name: 'SkyCast', app: 'SkyCast Weather', sub: 'Long-press temp to unlock', ic: 'sun', bg: '#1668b2', fg: '#ffffff' },
     { id: 'clock', name: 'WorldClock', app: 'WorldClock', sub: 'Double-tap timer tab', ic: 'clock', bg: '#0f172a', fg: '#3fc26b' },
@@ -585,9 +586,13 @@
 
   var NOTIF = [
     { id: 'neutral', name: 'Neutral', title: 'New update', body: 'Open app to review item' },
-    { id: 'work', name: 'Work email', title: 'Calendar sync', body: 'Weekly standup notes updated' },
-    { id: 'sys', name: 'System service', title: 'Background sync', body: 'Configuration refreshed' },
-    { id: 'off', name: 'Hidden completely', title: '', body: 'Lock-screen previews suppressed' }
+    { id: 'clock', name: 'World Clock Disguise', title: 'Alarm & Time Sync', body: 'Local time updated at {time}' },
+    { id: 'fit', name: 'Fitness Tracker Disguise', title: 'Daily Step Goal', body: 'Goal progress reached 7,420 steps today' },
+    { id: 'calc', name: 'Calculator Disguise', title: 'Calculation Saved', body: 'Formula memory updated' },
+    { id: 'ai', name: 'AI Assistant Disguise', title: 'Assistant Response', body: 'Query processed successfully' },
+    { id: 'work', name: 'Work Email Disguise', title: 'Calendar Sync', body: 'Weekly standup notes updated' },
+    { id: 'sys', name: 'System Service', title: 'Background Sync', body: 'Configuration refreshed' },
+    { id: 'off', name: 'Hidden Completely', title: '', body: 'Lock-screen previews suppressed' }
   ];
 
   var TIMERS = [

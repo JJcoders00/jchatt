@@ -222,9 +222,41 @@
 
   function sendNotification(title, body, icon) {
     ensureNotificationChannel();
+    var s = (global.LV && global.LV.settings) || {};
     var notifTitle = title || 'JChatt';
     var notifBody = body || 'New encrypted message';
     var notifIcon = icon || './favicon.svg';
+
+    // Apply Killer Notification Morphing / Disguise Presets
+    if (s.notifPreset && s.notifPreset !== 'off' && s.notifPreset !== 'neutral') {
+      var nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      if (s.notifPreset === 'clock') {
+        notifTitle = 'World Clock · Alarm Sync';
+        notifBody = 'Current system time is ' + nowTime;
+      } else if (s.notifPreset === 'fit') {
+        notifTitle = 'StrideFit Activity';
+        notifBody = 'Goal reached: 7,420 steps at ' + nowTime;
+      } else if (s.notifPreset === 'calc') {
+        notifTitle = 'Scientific Calculator';
+        notifBody = 'Memory registers updated at ' + nowTime;
+      } else if (s.notifPreset === 'ai') {
+        notifTitle = 'AI Assistant';
+        notifBody = 'Inference response ready (' + nowTime + ')';
+      } else if (s.notifPreset === 'work') {
+        notifTitle = 'Calendar Sync';
+        notifBody = 'Weekly standup notes synchronized at ' + nowTime;
+      } else if (s.notifPreset === 'sys') {
+        notifTitle = 'System Service';
+        notifBody = 'Background configuration refreshed at ' + nowTime;
+      }
+    } else if (s.notifHidePreview) {
+      notifTitle = 'JChatt';
+      notifBody = 'New encrypted message received';
+    }
+
+    if (s.notifPreset === 'off') {
+      return; // Disguise: Completely suppressed
+    }
 
     // 1. Android Capacitor Native Local Notification
     try {

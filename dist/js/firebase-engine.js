@@ -273,6 +273,14 @@
           localStorage.setItem('jchatt_saved_account', JSON.stringify(savedAccount));
           localStorage.setItem('jchatt_last_handle', cred.handle);
           localStorage.setItem('jchatt_cache_me', JSON.stringify(Engine.me));
+          
+          // Telegram/WhatsApp Multi-Account Registry
+          var allAcc = [];
+          try { allAcc = JSON.parse(localStorage.getItem('jchatt_all_accounts') || '[]'); } catch (e) {}
+          allAcc = allAcc.filter(function (a) { return a.uid !== uid && a.handle !== cred.handle; });
+          allAcc.unshift(savedAccount);
+          localStorage.setItem('jchatt_all_accounts', JSON.stringify(allAcc));
+
           if (global.AndroidSync && global.AndroidSync.setSavedAccount) {
             global.AndroidSync.setSavedAccount(JSON.stringify(savedAccount));
           }
@@ -318,6 +326,14 @@
           localStorage.setItem('jchatt_saved_account', JSON.stringify(savedAccount));
           localStorage.setItem('jchatt_last_handle', cred.handle);
           localStorage.setItem('jchatt_cache_me', JSON.stringify(profile));
+
+          // Telegram/WhatsApp Multi-Account Registry
+          var allAcc = [];
+          try { allAcc = JSON.parse(localStorage.getItem('jchatt_all_accounts') || '[]'); } catch (e) {}
+          allAcc = allAcc.filter(function (a) { return a.uid !== uid && a.handle !== cred.handle; });
+          allAcc.unshift(savedAccount);
+          localStorage.setItem('jchatt_all_accounts', JSON.stringify(allAcc));
+
           if (global.AndroidSync && global.AndroidSync.setSavedAccount) {
             global.AndroidSync.setSavedAccount(JSON.stringify(savedAccount));
           }
