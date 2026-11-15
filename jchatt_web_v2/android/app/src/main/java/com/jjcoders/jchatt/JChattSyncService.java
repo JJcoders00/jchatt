@@ -58,6 +58,7 @@ public class JChattSyncService extends Service {
             PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
             if (pm != null) {
                 wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "JChatt::NativeSyncLock");
+                wakeLock.setReferenceCounted(false);
                 wakeLock.acquire();
             }
         } catch (Exception ignored) {}
@@ -126,7 +127,7 @@ public class JChattSyncService extends Service {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_SYNC_ID)
             .setContentTitle("JChatt")
             .setContentText("Background service active")
-            .setSmallIcon(R.drawable.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(pi)
             .setOngoing(true)
             .setSilent(true)
@@ -225,27 +226,62 @@ public class JChattSyncService extends Service {
         try {
             JSONObject root = new JSONObject(jsonStr);
             String path = root.optString("path", "");
-            JSONObject data = root.optJSONObject("data");
+            Object dataObj = root.opt("data");
 
-            if (data == null && root.has("lastText")) {
-                data = root;
-            }
-
-            if (data != null) {
-                Iterator<String> keys = data.keys();
-                while (keys.hasNext()) {
-                    String key = keys.next();
-                    JSONObject chatObj = data.optJSONObject(key);
-                    if (chatObj != null) {
-                        processSingleChat(uid, key, chatObj, isInitial);
-                    }
-                }
-                if (data.has("lastText") && data.has("lastMsgId")) {
+            if (dataObj instanceof JSONObject) {
+                JSONObject data = (JSONObject) dataObj;
+                // If it has chat properties directly (e.g. put to /chat_id)
+                if (data.has("lastText") || data.has("lastMsgId")) {
                     String chatId = path.replace("/", "").trim();
                     processSingleChat(uid, chatId, data, isInitial);
+                } else {
+                    // It is a map of chats (e.g. put to /)
+                    Iterator<String> keys = data.keys();
+                    while (keys.hasNext()) {
+                        String key = keys.next();
+                        JSONObject chatObj = data.optJSONObject(key);
+                        if (chatObj != null) {
+                            processSingleChat(uid, key, chatObj, isInitial);
+                        }
+                    }
+                }
+            } else if (dataObj instanceof String || dataObj instanceof Number) {
+                // Firebase patch or put on a child path (e.g. path="/chat_id/lastText" or "/chat_id/lastMsgId")
+                String[] parts = path.split("/");
+                if (parts.length >= 2) {
+                    String chatId = parts[1];
+                    fetchSingleChatAndProcess(uid, chatId);
                 }
             }
         } catch (Exception ignored) {}
+    }
+
+    private void fetchSingleChatAndProcess(String uid, String chatId) {
+        new Thread(() -> {
+            try {
+                SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+                String token = prefs.getString("sync_token", null);
+                String urlStr = "https://jjcodersjchatt-default-rtdb.firebaseio.com/v2/userChats/" + uid + "/" + chatId + ".json";
+                if (token != null && !token.trim().isEmpty()) {
+                    urlStr += "?auth=" + token.trim();
+                }
+                URL url = new URL(urlStr);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestProperty("User-Agent", "JChattNativeSync/2.0");
+                conn.setConnectTimeout(8000);
+                conn.setReadTimeout(8000);
+                if (conn.getResponseCode() == 200) {
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                        StringBuilder sb = new StringBuilder();
+                        String l;
+                        while ((l = br.readLine()) != null) sb.append(l);
+                        JSONObject chat = new JSONObject(sb.toString());
+                        processSingleChat(uid, chatId, chat, false);
+                    }
+                }
+                conn.disconnect();
+            } catch (Exception ignored) {}
+        }).start();
     }
 
     private void processSingleChat(String uid, String chatId, JSONObject chat, boolean isInitial) {
@@ -254,6 +290,7 @@ public class JChattSyncService extends Service {
             String lastFrom = chat.optString("lastFrom", "");
             String lastText = chat.optString("lastText", "New message");
             String senderName = chat.optString("name", chat.optString("handle", "JChatt Contact"));
+            long lastTs = chat.optLong("lastTs", 0L);
 
             if (lastMsgId.isEmpty() || lastFrom.isEmpty()) return;
 
@@ -262,12 +299,24 @@ public class JChattSyncService extends Service {
                 // 1. Immediately mark message as DELIVERED in Firebase via quick HTTP PUT!
                 markDeliveredInFirebase(chatId, lastMsgId, uid);
 
-                // 2. If it's a new message and not the initial connection batch:
-                if (!isInitial && !seenMessageIds.contains(lastMsgId)) {
+                // 2. Notification gating:
+                // Check SharedPreferences for persistent last_notified_ts
+                SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+                long lastNotifiedTs = prefs.getLong("last_notified_ts", 0L);
+
+                boolean isNew = !seenMessageIds.contains(lastMsgId) && (lastTs > lastNotifiedTs || !isInitial);
+
+                if (isNew) {
                     seenMessageIds.add(lastMsgId);
+                    if (lastTs > lastNotifiedTs) {
+                        prefs.edit().putLong("last_notified_ts", lastTs).apply();
+                    }
                     showNativeMessageNotification(chatId, senderName, lastText);
                 } else if (isInitial) {
                     seenMessageIds.add(lastMsgId);
+                    if (lastTs > lastNotifiedTs) {
+                        prefs.edit().putLong("last_notified_ts", lastTs).apply();
+                    }
                 }
             }
         } catch (Exception ignored) {}
@@ -316,13 +365,13 @@ public class JChattSyncService extends Service {
             );
 
             Notification publicVersion = new NotificationCompat.Builder(this, CHANNEL_MESSAGES_ID)
-                .setSmallIcon(R.drawable.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(sender)
                 .setContentText(text)
                 .build();
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_MESSAGES_ID)
-                .setSmallIcon(R.drawable.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(sender)
                 .setContentText(text)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
