@@ -1,5 +1,6 @@
 package com.jjcoders.jchatt;
 
+import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -9,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
+import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -32,8 +34,8 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class JChattSyncService extends Service {
-    public static final String CHANNEL_SYNC_ID = "jchatt_sync_channel";
-    public static final String CHANNEL_MESSAGES_ID = "jchatt_messages";
+    public static final String CHANNEL_SYNC_ID = "jchatt_sync_v6";
+    public static final String CHANNEL_MESSAGES_ID = "jchatt_messages_v6";
     public static final int SYNC_NOTIF_ID = 7771;
 
     private PowerManager.WakeLock wakeLock;
@@ -81,6 +83,8 @@ public class JChattSyncService extends Service {
             );
             syncChannel.setDescription("Maintains secure socket for incoming calls & messages");
             syncChannel.setShowBadge(false);
+            syncChannel.setSound(null, null);
+            syncChannel.enableVibration(false);
             syncChannel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
             nm.createNotificationChannel(syncChannel);
 
@@ -92,8 +96,11 @@ public class JChattSyncService extends Service {
             );
             msgChannel.setDescription("High priority encrypted message alerts");
             msgChannel.enableVibration(true);
-            msgChannel.setVibrationPattern(new long[]{0, 250, 150, 250});
+            msgChannel.setVibrationPattern(new long[]{0, 280, 140, 280});
             msgChannel.setShowBadge(true);
+            msgChannel.enableLights(true);
+            msgChannel.setLightColor(Color.GREEN);
+            msgChannel.setBypassDnd(true);
             msgChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
 
             Uri defaultSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
@@ -118,13 +125,16 @@ public class JChattSyncService extends Service {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_SYNC_ID)
             .setContentTitle("JChatt")
-            .setContentText("Background sync active")
+            .setContentText("Background service active")
             .setSmallIcon(R.drawable.ic_launcher)
             .setContentIntent(pi)
             .setOngoing(true)
             .setSilent(true)
             .setPriority(NotificationCompat.PRIORITY_MIN)
-            .setVisibility(NotificationCompat.VISIBILITY_SECRET);
+            .setVisibility(NotificationCompat.VISIBILITY_SECRET)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setShowWhen(false)
+            .setLocalOnly(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(SYNC_NOTIF_ID, builder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
@@ -163,7 +173,14 @@ public class JChattSyncService extends Service {
         HttpURLConnection conn = null;
         BufferedReader reader = null;
         try {
-            URL url = new URL("https://jjcodersjchatt-default-rtdb.firebaseio.com/v2/userChats/" + uid + ".json");
+            SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+            String token = prefs.getString("sync_token", null);
+            String urlStr = "https://jjcodersjchatt-default-rtdb.firebaseio.com/v2/userChats/" + uid + ".json";
+            if (token != null && !token.trim().isEmpty()) {
+                urlStr += "?auth=" + token.trim();
+            }
+
+            URL url = new URL(urlStr);
             conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Accept", "text/event-stream");
             conn.setRequestProperty("User-Agent", "JChattNativeSync/2.0");
@@ -259,7 +276,14 @@ public class JChattSyncService extends Service {
     private void markDeliveredInFirebase(String chatId, String msgId, String uid) {
         new Thread(() -> {
             try {
-                URL url = new URL("https://jjcodersjchatt-default-rtdb.firebaseio.com/v2/messages/" + chatId + "/" + msgId + "/deliveredTo/" + uid + ".json");
+                SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+                String token = prefs.getString("sync_token", null);
+                String urlStr = "https://jjcodersjchatt-default-rtdb.firebaseio.com/v2/messages/" + chatId + "/" + msgId + "/deliveredTo/" + uid + ".json";
+                if (token != null && !token.trim().isEmpty()) {
+                    urlStr += "?auth=" + token.trim();
+                }
+
+                URL url = new URL(urlStr);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("PUT");
                 conn.setRequestProperty("Content-Type", "application/json");
@@ -291,27 +315,82 @@ public class JChattSyncService extends Service {
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? (PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE) : PendingIntent.FLAG_UPDATE_CURRENT
             );
 
+            Notification publicVersion = new NotificationCompat.Builder(this, CHANNEL_MESSAGES_ID)
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle(sender)
+                .setContentText(text)
+                .build();
+
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_MESSAGES_ID)
                 .setSmallIcon(R.drawable.ic_launcher)
                 .setContentTitle(sender)
                 .setContentText(text)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(text))
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setAutoCancel(true)
                 .setContentIntent(pi)
-                .setDefaults(Notification.DEFAULT_ALL)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setPublicVersion(publicVersion);
 
             nm.notify((int) (System.currentTimeMillis() % 100000), builder.build());
         } catch (Exception ignored) {}
     }
 
     @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        try {
+            Intent restartService = new Intent(getApplicationContext(), JChattSyncService.class);
+            restartService.setPackage(getPackageName());
+            PendingIntent pi = PendingIntent.getService(
+                getApplicationContext(),
+                1001,
+                restartService,
+                PendingIntent.FLAG_ONE_SHOT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+            );
+            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            if (am != null) {
+                long triggerAt = System.currentTimeMillis() + 1000;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
+                } else {
+                    am.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pi);
+                }
+            }
+        } catch (Exception ignored) {}
+        super.onTaskRemoved(rootIntent);
+    }
+
+    @Override
     public void onDestroy() {
         isRunning = false;
+        try {
+            SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+            String uid = prefs.getString("sync_uid", null);
+            if (uid != null && !uid.trim().isEmpty()) {
+                Intent restartService = new Intent(getApplicationContext(), JChattSyncService.class);
+                restartService.setPackage(getPackageName());
+                PendingIntent pi = PendingIntent.getService(
+                    getApplicationContext(),
+                    1002,
+                    restartService,
+                    PendingIntent.FLAG_ONE_SHOT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+                );
+                AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                if (am != null) {
+                    long triggerAt = System.currentTimeMillis() + 1500;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
+                    } else {
+                        am.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pi);
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
         if (wakeLock != null && wakeLock.isHeld()) {
-            wakeLock.release();
+            try { wakeLock.release(); } catch (Exception ignored) {}
         }
         super.onDestroy();
     }

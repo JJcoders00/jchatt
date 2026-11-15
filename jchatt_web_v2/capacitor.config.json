@@ -7,7 +7,7 @@
       "launchShowDuration": 0,
       "launchAutoHide": true,
       "backgroundColor": "#0b141a",
-      "androidSplashResourceName": "splash",
+      "androidSplashResourceName": "launch_background",
       "androidScaleType": "CENTER_CROP",
       "showSpinner": false
     }

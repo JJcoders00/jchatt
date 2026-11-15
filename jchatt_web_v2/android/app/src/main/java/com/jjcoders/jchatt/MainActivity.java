@@ -66,22 +66,48 @@ public class MainActivity extends BridgeActivity {
             }
         });
 
-        // 4. Add direct JavaScript Interface for reliable sync UID handshake
+        // 4. Add direct JavaScript Interface for reliable sync UID handshake and account persistence
         try {
             if (bridge != null && bridge.getWebView() != null) {
                 bridge.getWebView().addJavascriptInterface(new Object() {
                     @android.webkit.JavascriptInterface
                     public void setSyncUser(String uid) {
+                        setSyncUserWithToken(uid, "");
+                    }
+                    @android.webkit.JavascriptInterface
+                    public void setSyncUser(String uid, String token) {
+                        setSyncUserWithToken(uid, token);
+                    }
+                    private void setSyncUserWithToken(String uid, String token) {
                         if (uid != null && !uid.trim().isEmpty()) {
                             SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
-                            p.edit().putString("sync_uid", uid.trim()).apply();
+                            SharedPreferences.Editor ed = p.edit().putString("sync_uid", uid.trim());
+                            if (token != null) ed.putString("sync_token", token.trim());
+                            ed.apply();
                             startSyncService();
                         }
                     }
                     @android.webkit.JavascriptInterface
                     public void clearSyncUser() {
                         SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
-                        p.edit().remove("sync_uid").apply();
+                        p.edit().remove("sync_uid").remove("sync_token").apply();
+                    }
+                    @android.webkit.JavascriptInterface
+                    public void setSavedAccount(String json) {
+                        if (json != null && !json.trim().isEmpty()) {
+                            SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+                            p.edit().putString("saved_account_json", json.trim()).apply();
+                        }
+                    }
+                    @android.webkit.JavascriptInterface
+                    public String getSavedAccount() {
+                        SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+                        return p.getString("saved_account_json", null);
+                    }
+                    @android.webkit.JavascriptInterface
+                    public void clearSavedAccount() {
+                        SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+                        p.edit().remove("saved_account_json").apply();
                     }
                 }, "AndroidSync");
             }
@@ -98,9 +124,9 @@ public class MainActivity extends BridgeActivity {
     private void handleNativeBackAction() {
         if (bridge != null && bridge.getWebView() != null) {
             bridge.getWebView().evaluateJavascript(
-                "(function() { if (window.handleNativeBack) { return window.handleNativeBack(); } return false; })()",
+                "(function() { try { if (window.handleNativeBack) { return window.handleNativeBack() ? 'true' : 'false'; } } catch(e){} return 'false'; })()",
                 value -> {
-                    if ("false".equals(value) || value == null) {
+                    if (value == null || "false".equals(value) || "\"false\"".equals(value)) {
                         moveTaskToBack(true);
                     }
                 }

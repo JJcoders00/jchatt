@@ -348,20 +348,24 @@
 
     var nextHtml = '';
     if (LV.route === 'landing') {
+      document.body.classList.add('is-landing');
       nextHtml = global.JCLANDING ? global.JCLANDING.renderLandingPage(LV.legalModal) : '';
-    } else if (LV.route === 'privacy-policy' || LV.route === 'terms-of-service' || LV.route === 'security-whitepaper' || LV.route === 'warrant-canary') {
-      var dKey = LV.route === 'terms-of-service' ? 'terms' : (LV.route === 'security-whitepaper' ? 'security' : (LV.route === 'warrant-canary' ? 'canary' : 'privacy'));
-      nextHtml = '<div style="min-height:100vh;background:#fff">' + (global.JCLANDING ? global.JCLANDING.renderLegalDoc(dKey) : '') + '</div>';
-    } else if (isDesktopShellRoute()) {
-      nextHtml = renderDesktopWeb();
     } else {
-      var sFn = JCS.SCREENS[LV.route] || JCS.SCREENS['splash'];
-      var phoneBg = '';
-      if (LV.route.indexOf('welcome-') === 0 || LV.route === 'account-ready') phoneBg = 'paper';
-      nextHtml = '<div class="studio"><div class="proto"><div class="phone ' + phoneBg + ' ' + themeCls() + '">'
-        + sFn().replace('class="scr"', 'class="scr ' + (LV.anim || '') + '"')
-        + '</div></div></div>';
-      LV.anim = '';
+      document.body.classList.remove('is-landing');
+      if (LV.route === 'privacy-policy' || LV.route === 'terms-of-service' || LV.route === 'security-whitepaper' || LV.route === 'warrant-canary') {
+        var dKey = LV.route === 'terms-of-service' ? 'terms' : (LV.route === 'security-whitepaper' ? 'security' : (LV.route === 'warrant-canary' ? 'canary' : 'privacy'));
+        nextHtml = '<div style="min-height:100vh;background:#fff">' + (global.JCLANDING ? global.JCLANDING.renderLegalDoc(dKey) : '') + '</div>';
+      } else if (isDesktopShellRoute()) {
+        nextHtml = renderDesktopWeb();
+      } else {
+        var sFn = JCS.SCREENS[LV.route] || JCS.SCREENS['splash'];
+        var phoneBg = '';
+        if (LV.route.indexOf('welcome-') === 0 || LV.route === 'account-ready') phoneBg = 'paper';
+        nextHtml = '<div class="studio"><div class="proto"><div class="phone ' + phoneBg + ' ' + themeCls() + '">'
+          + sFn().replace('class="scr"', 'class="scr ' + (LV.anim || '') + '"')
+          + '</div></div></div>';
+        LV.anim = '';
+      }
     }
 
     if (nextHtml !== lastRenderedHtml) {
@@ -442,6 +446,22 @@
 
   // --- Action Dispatcher ---
   var ACT = {
+    reconnect_saved: function () {
+      var exAcc = null;
+      try {
+        exAcc = JSON.parse(localStorage.getItem('jchatt_saved_account') || localStorage.getItem('jchatt_cache_me') || 'null');
+      } catch (e) {}
+      if (exAcc) {
+        JFE.uid = exAcc.uid;
+        JFE.me = exAcc;
+        LV.settings.onboarded = true;
+        LV.save();
+        go('chats', 'tab');
+        if (exAcc.email && exAcc.password) {
+          JFE.auth.signInWithEmailAndPassword(exAcc.email, exAcc.password).catch(function () {});
+        }
+      }
+    },
     dobioauth: function () {
       tryBiometricUnlock();
     },
@@ -1557,7 +1577,16 @@
       return;
     }
 
-    if (JFE.uid) {
+    var savedAcc = null;
+    try {
+      savedAcc = JSON.parse(localStorage.getItem('jchatt_saved_account') || localStorage.getItem('jchatt_cache_me') || 'null');
+    } catch (e) {}
+
+    if (JFE.uid || (savedAcc && (savedAcc.uid || savedAcc.handle))) {
+      if (!JFE.uid && savedAcc && savedAcc.uid) {
+        JFE.uid = savedAcc.uid;
+        JFE.me = savedAcc;
+      }
       LV.settings.onboarded = true;
       LV.save();
       if (LV.pendingInviteToken) {
@@ -1591,26 +1620,10 @@
       var AppPlugin = Plugins && (Plugins.App || (Cap && Cap.Plugins && Cap.Plugins.App));
       if (AppPlugin && AppPlugin.addListener) {
         AppPlugin.addListener('backButton', function () {
-          if (LV.wmodal) {
-            LV.wmodal = null;
-            render();
-            return;
+          var handled = global.handleNativeBack();
+          if (!handled && AppPlugin.exitApp) {
+            AppPlugin.exitApp();
           }
-          if (LV.mediaViewer || LV.attachDrawer) {
-            LV.mediaViewer = null;
-            LV.attachDrawer = false;
-            render();
-            return;
-          }
-          if (LV.curChatId || LV.route === 'chat') {
-            go('inbox', 'pop');
-            return;
-          }
-          if (LV.route !== 'inbox' && LV.route !== 'landing' && LV.route !== 'splash' && LV.route !== 'welcome') {
-            go('inbox', 'pop');
-            return;
-          }
-          if (AppPlugin.exitApp) AppPlugin.exitApp();
         });
         AppPlugin.addListener('appStateChange', function (state) {
           if (!state.isActive) {
@@ -1728,7 +1741,7 @@
       if (!initialRouted) {
         decideInitialRoute();
       } else if (user) {
-        if (LV.route === 'splash' || (LV.route === 'welcome-1' && !LV.draftRestore && (!LV.draftCreate || !LV.draftCreate.handle))) {
+        if (LV.route === 'splash' || LV.route === 'welcome-1' || LV.route === 'welcome-2' || LV.route === 'welcome-3' || LV.route === 'create-id' || LV.route === 'restore-account' || LV.route === 'auth') {
           go('chats', 'tab');
         }
       }
@@ -1766,7 +1779,7 @@
       }
     }
     // 5. If on any secondary page (settings, calls, updates, secure-device, vault, etc.) -> return to chats
-    if (LV.route && LV.route !== 'chats' && LV.route !== 'landing' && LV.route !== 'splash' && LV.route !== 'welcome' && LV.route !== 'login' && LV.route !== 'auth') {
+    if (LV.route && LV.route !== 'chats' && LV.route !== 'landing' && LV.route !== 'splash' && LV.route.indexOf('welcome') === -1 && LV.route !== 'login' && LV.route !== 'auth') {
       go('chats', 'pop');
       return true;
     }

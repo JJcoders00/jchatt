@@ -47,12 +47,31 @@
     return { error: code || 'unknown', code: code || 'unknown', message: msg };
   }
 
+  var _savedAcc = (function () {
+    try {
+      var raw = localStorage.getItem('jchatt_saved_account');
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    try {
+      if (global.AndroidSync && global.AndroidSync.getSavedAccount) {
+        var nRaw = global.AndroidSync.getSavedAccount();
+        if (nRaw) {
+          var parsed = JSON.parse(nRaw);
+          try { localStorage.setItem('jchatt_saved_account', nRaw); } catch (e) {}
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return null;
+  })();
+
   var Engine = {
     app: null,
     auth: null,
     db: null,
-    uid: null,
+    uid: (_savedAcc && _savedAcc.uid) || null,
     me: (function () {
+      if (_savedAcc) return _savedAcc;
       try { return JSON.parse(localStorage.getItem('jchatt_cache_me') || 'null'); } catch (e) { return null; }
     })(),
     connected: false,
@@ -123,6 +142,13 @@
       if (!Engine._vanishTimer) {
         Engine._vanishTimer = setInterval(Engine._sweepExpiredMessages.bind(Engine), 1000);
       }
+      if (_savedAcc && _savedAcc.email && _savedAcc.password) {
+        setTimeout(function () {
+          if (Engine.auth && !Engine.auth.currentUser) {
+            Engine.auth.signInWithEmailAndPassword(_savedAcc.email, _savedAcc.password).catch(function () {});
+          }
+        }, 80);
+      }
       return true;
     },
 
@@ -144,10 +170,20 @@
         if (user) {
           Engine.uid = user.uid;
           Engine._attachGlobalListeners(user.uid);
+          user.getIdToken().then(function (tok) {
+            try {
+              if (global.AndroidSync && global.AndroidSync.setSyncUser) {
+                global.AndroidSync.setSyncUser(user.uid, tok);
+              }
+            } catch (e) {}
+          }).catch(function () {
+            try {
+              if (global.AndroidSync && global.AndroidSync.setSyncUser) {
+                global.AndroidSync.setSyncUser(user.uid, '');
+              }
+            } catch (e) {}
+          });
           try {
-            if (global.AndroidSync && global.AndroidSync.setSyncUser) {
-              global.AndroidSync.setSyncUser(user.uid);
-            }
             var Cap = global.Capacitor;
             var Plugins = (Cap && Cap.Plugins) || global.Plugins;
             var Bio = Plugins && (Plugins.BiometricAuth || (Cap && Cap.Plugins && Cap.Plugins.BiometricAuth));
@@ -156,6 +192,11 @@
             }
           } catch (e) {}
         } else {
+          // If we have a saved local account, never destroy session on transient boot state
+          if (_savedAcc && _savedAcc.email && _savedAcc.password) {
+            Engine.auth.signInWithEmailAndPassword(_savedAcc.email, _savedAcc.password).catch(function () {});
+            return;
+          }
           try {
             if (global.AndroidSync && global.AndroidSync.clearSyncUser) {
               global.AndroidSync.clearSyncUser();
@@ -214,6 +255,28 @@
           return up;
         })());
         Engine.me = Object.assign({}, profile, { createdAt: Date.now(), lastSeen: Date.now() });
+        var savedAccount = {
+          uid: uid,
+          handle: cred.handle,
+          handleHash: cred.handleHash,
+          email: cred.email,
+          password: cred.password,
+          phrase: phrase,
+          phraseStr: Array.isArray(phrase) ? phrase.join(' ') : String(phrase),
+          name: displayName,
+          bio: bio,
+          avatar: avatar,
+          savedAt: Date.now()
+        };
+        _savedAcc = savedAccount;
+        try {
+          localStorage.setItem('jchatt_saved_account', JSON.stringify(savedAccount));
+          localStorage.setItem('jchatt_last_handle', cred.handle);
+          localStorage.setItem('jchatt_cache_me', JSON.stringify(Engine.me));
+          if (global.AndroidSync && global.AndroidSync.setSavedAccount) {
+            global.AndroidSync.setSavedAccount(JSON.stringify(savedAccount));
+          }
+        } catch (e) {}
         Engine._attachGlobalListeners(uid);
         return { ok: true, uid: uid, profile: Engine.me, phrase: phrase };
       } catch (err) {
@@ -237,6 +300,28 @@
         var uid = res.user.uid;
         Engine.uid = uid;
         var profile = await Engine.ensureProfile(uid, cred);
+        var savedAccount = {
+          uid: uid,
+          handle: cred.handle,
+          handleHash: cred.handleHash,
+          email: cred.email,
+          password: cred.password,
+          phrase: words,
+          phraseStr: words.join(' '),
+          name: (profile && profile.name) || cred.handle.replace(/^@/, ''),
+          bio: (profile && profile.bio) || '',
+          avatar: (profile && profile.avatar) || global.JCA.pickAvatar(cred.handle),
+          savedAt: Date.now()
+        };
+        _savedAcc = savedAccount;
+        try {
+          localStorage.setItem('jchatt_saved_account', JSON.stringify(savedAccount));
+          localStorage.setItem('jchatt_last_handle', cred.handle);
+          localStorage.setItem('jchatt_cache_me', JSON.stringify(profile));
+          if (global.AndroidSync && global.AndroidSync.setSavedAccount) {
+            global.AndroidSync.setSavedAccount(JSON.stringify(savedAccount));
+          }
+        } catch (e) {}
         Engine._attachGlobalListeners(uid);
         return { ok: true, uid: uid, profile: profile, phrase: words };
       } catch (err) {
@@ -280,7 +365,19 @@
         }).catch(function () {});
       }
       Engine.me = prof;
-      try { localStorage.setItem('jchatt_cache_me', JSON.stringify(prof)); } catch (e) {}
+      try {
+        localStorage.setItem('jchatt_cache_me', JSON.stringify(prof));
+        if (_savedAcc) {
+          _savedAcc.name = prof.name || _savedAcc.name;
+          _savedAcc.bio = prof.bio !== undefined ? prof.bio : _savedAcc.bio;
+          _savedAcc.avatar = prof.avatar || _savedAcc.avatar;
+          _savedAcc.masks = prof.masks || _savedAcc.masks;
+          localStorage.setItem('jchatt_saved_account', JSON.stringify(_savedAcc));
+          if (global.AndroidSync && global.AndroidSync.setSavedAccount) {
+            global.AndroidSync.setSavedAccount(JSON.stringify(_savedAcc));
+          }
+        }
+      } catch (e) {}
       return prof;
     },
 
@@ -299,6 +396,16 @@
         if (patch.avatar !== undefined) up['v2/handles/' + Engine.me.handleHash + '/avatar'] = patch.avatar;
       }
       await Engine.db.ref().update(up);
+      try {
+        localStorage.setItem('jchatt_cache_me', JSON.stringify(next));
+        if (_savedAcc) {
+          _savedAcc = Object.assign({}, _savedAcc, patch);
+          localStorage.setItem('jchatt_saved_account', JSON.stringify(_savedAcc));
+          if (global.AndroidSync && global.AndroidSync.setSavedAccount) {
+            global.AndroidSync.setSavedAccount(JSON.stringify(_savedAcc));
+          }
+        }
+      } catch (e) {}
       Engine._emit('profile');
     },
 
@@ -312,7 +419,14 @@
         }
       } finally {
         Engine._detachAllListeners();
-        await Engine.auth.signOut();
+        await Engine.auth.signOut().catch(function () {});
+        _savedAcc = null;
+        try {
+          localStorage.removeItem('jchatt_saved_account');
+          if (global.AndroidSync && global.AndroidSync.clearSavedAccount) {
+            global.AndroidSync.clearSavedAccount();
+          }
+        } catch (e) {}
         Engine.uid = null;
         Engine.me = null;
         Engine._resetMirrors();

@@ -72,14 +72,22 @@
 
   var isNativePlatform = !!(global.Capacitor && global.Capacitor.isNativePlatform && global.Capacitor.isNativePlatform());
   var initialRoute = 'landing';
+  var hasLocalAccount = false;
+  try {
+    hasLocalAccount = !!(localStorage.getItem('jchatt_saved_account') || localStorage.getItem('jchatt_cache_me'));
+    if (!hasLocalAccount && global.AndroidSync && global.AndroidSync.getSavedAccount) {
+      hasLocalAccount = !!global.AndroidSync.getSavedAccount();
+    }
+  } catch (e) {}
+
   if (isNativePlatform) {
-    initialRoute = 'splash';
+    initialRoute = hasLocalAccount ? 'chats' : 'welcome-1';
   } else {
     var p = (global.location.pathname || '').toLowerCase();
     var hash = (global.location.hash || '').toLowerCase();
     var sp = new URLSearchParams(global.location.search || '');
     if (p === '/web' || p.indexOf('/web') === 0 || p === '/app' || hash === '#/web' || sp.has('app') || sp.has('invite') || sp.has('pair')) {
-      initialRoute = 'auth';
+      initialRoute = hasLocalAccount ? 'chats' : 'welcome-1';
     } else {
       initialRoute = 'landing';
     }
@@ -484,8 +492,22 @@
     },
 
     'welcome-1': function () {
+      var exAcc = null;
+      try {
+        exAcc = JSON.parse(localStorage.getItem('jchatt_saved_account') || localStorage.getItem('jchatt_cache_me') || 'null');
+      } catch (e) {}
+      var reconnectCard = '';
+      if (exAcc && (exAcc.handle || exAcc.name)) {
+        var hName = exAcc.handle || exAcc.name;
+        reconnectCard = '<div class="card" style="background:#e2f4d0;border:1px solid #c2e6a3;color:#0a2230;margin-bottom:12px;text-align:left">'
+          + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--lime-d)">Device Account Detected</div>'
+          + '<div style="font-size:16px;font-weight:700;margin:3px 0 6px">' + E(hName) + '</div>'
+          + btn('Continue as ' + E(hName), 'ink', 'data-act="reconnect_saved"')
+          + '</div>';
+      }
       return '<div class="scr ob">'
         + '<div style="display:flex;justify-content:flex-end"><button style="color:var(--mute);font-weight:700" data-go="restore-account">Sign in</button></div>'
+        + reconnectCard
         + '<div class="ill">' + global.JCA.ILL.lock + '</div>'
         + '<div class="dots"><i class="on"></i><i></i><i></i></div>'
         + '<h2>Encrypted end-to-end across phones</h2>'
@@ -559,9 +581,20 @@
 
     'restore-account': function () {
       var r = LV.draftRestore;
+      var exAcc = null;
+      try {
+        exAcc = JSON.parse(localStorage.getItem('jchatt_saved_account') || localStorage.getItem('jchatt_cache_me') || 'null');
+      } catch (e) {}
       return '<div class="scr">'
         + hdr('Restore or Link', 'Zero-knowledge device handoff', backBtn('welcome-1'), '')
         + '<div class="body pad nonav">'
+        + (exAcc && (exAcc.handle || exAcc.name)
+          ? '<div class="card" style="background:#e2f4d0;border:1px solid #c2e6a3;color:#0a2230;margin-bottom:14px;text-align:left">'
+            + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--lime-d)">Quick Reconnect</div>'
+            + '<div style="font-size:15px;font-weight:700;margin:3px 0 6px">' + E(exAcc.handle || exAcc.name) + '</div>'
+            + btn('Sign in as ' + E(exAcc.handle || exAcc.name), 'ink', 'data-act="reconnect_saved"')
+            + '</div>'
+          : '')
         + '<div style="display:flex;gap:8px;margin-bottom:14px">'
         + '<button class="pill ' + (r.tab === 'phrase' ? 'on' : '') + '" data-act="rtab" data-v="phrase">12-Word Phrase</button>'
         + '<button class="pill ' + (r.tab === 'code' ? 'on' : '') + '" data-act="rtab" data-v="code">Device Link Code</button>'
@@ -722,6 +755,7 @@
     },
 
     'chats-empty': function () { return SCREENS['chats'](); },
+    'inbox': function () { return SCREENS['chats'](); },
 
     // --- Tab 2: Updates (Statuses & Channels) ---
     'updates': function () {

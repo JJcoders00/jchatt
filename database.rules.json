@@ -11,11 +11,22 @@
       },
       "messages": {
         "$chatId": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          "$msgId": {
+            "deliveredTo": {
+              "$uid": {
+                ".write": true
+              }
+            }
+          },
           ".indexOn": ["ts"]
         }
       },
       "userChats": {
         "$uid": {
+          ".read": true,
+          ".write": "auth != null",
           ".indexOn": ["lastTs"]
         }
       },
