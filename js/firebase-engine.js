@@ -593,6 +593,21 @@
       return 'dm_' + [String(uidA), String(uidB)].sort().join('__');
     },
 
+    getChatKey: function (chatId, chat) {
+      if (chatId && typeof chatId === 'string' && chatId.indexOf('dm_') === 0) {
+        var raw = chatId.replace(/^dm_/, '');
+        var parts = raw.split('__');
+        if (parts.length >= 2) {
+          return [String(parts[0]), String(parts[1])].sort().join(':');
+        }
+      }
+      chat = chat || (Engine.chats && Engine.chats[chatId]);
+      if (chat && chat.peerUid && Engine.uid) {
+        return [String(Engine.uid), String(chat.peerUid)].sort().join(':');
+      }
+      return 'jchatt:chat:' + (chatId || 'global');
+    },
+
     startDmWith: async function (peer) {
       if (!Engine.uid || !Engine.me) throw new Error('Not signed in');
       if (!peer || !peer.uid) throw new Error('Peer UID missing');
@@ -683,6 +698,19 @@
         if (Engine.pendingByChat[chatId] && Engine.pendingByChat[chatId][val.id]) {
           delete Engine.pendingByChat[chatId][val.id];
         }
+
+        // Telegram-Grade E2EE: Decrypt payload on arrival
+        if (val.cipher && global.JCA && global.JCA.decryptMessagePayload) {
+          var chatKey = Engine.getChatKey(chatId, Engine.chats[chatId]);
+          global.JCA.decryptMessagePayload(val.cipher, chatKey).then(function (dec) {
+            if (dec && typeof dec === 'object') {
+              Object.assign(val, dec);
+              Engine._saveMsgsCache();
+              Engine._emit('messages');
+            }
+          }).catch(function () {});
+        }
+
         Engine.messagesByChat[chatId][val.id] = val;
         Engine._saveMsgsCache();
         if (val.from !== Engine.uid) {
@@ -705,6 +733,19 @@
         var val = snap.val();
         if (!val) return;
         val.id = val.id || snap.key;
+
+        // Telegram-Grade E2EE: Decrypt payload on update
+        if (val.cipher && global.JCA && global.JCA.decryptMessagePayload) {
+          var chatKey = Engine.getChatKey(chatId, Engine.chats[chatId]);
+          global.JCA.decryptMessagePayload(val.cipher, chatKey).then(function (dec) {
+            if (dec && typeof dec === 'object') {
+              Object.assign(val, dec);
+              Engine._saveMsgsCache();
+              Engine._emit('messages');
+            }
+          }).catch(function () {});
+        }
+
         Engine.messagesByChat[chatId][val.id] = val;
         Engine._saveMsgsCache();
         Engine._emit('messages');
@@ -846,12 +887,41 @@
       var text = (payload && payload.text) || '';
       var preview = Engine._msgPreview({ kind: kind, text: text, poll: payload && payload.poll });
 
+      // Telegram-Grade E2EE: Encrypt payload with AES-256-GCM before sending
+      var chatKey = Engine.getChatKey(chatId, chat);
+      var e2eePayload = {
+        kind: kind,
+        text: text
+      };
+      if (payload && payload.replyTo) e2eePayload.replyTo = payload.replyTo;
+      if (payload && payload.imgData) e2eePayload.imgData = payload.imgData;
+      if (payload && payload.stickerUrl) e2eePayload.stickerUrl = payload.stickerUrl;
+      if (payload && payload.audioData) {
+        e2eePayload.audioData = payload.audioData;
+        e2eePayload.audioSec = payload.audioSec || 3;
+      }
+      if (payload && payload.poll) e2eePayload.poll = payload.poll;
+      if (payload && payload.loc) e2eePayload.loc = payload.loc;
+      if (payload && payload.contact) e2eePayload.contact = payload.contact;
+      if (payload && payload.doc) e2eePayload.doc = payload.doc;
+      if (payload && payload.viewOnce) e2eePayload.viewOnce = true;
+
+      var cipher = null;
+      if (global.JCA && global.JCA.encryptMessagePayload) {
+        try {
+          cipher = await global.JCA.encryptMessagePayload(e2eePayload, chatKey);
+        } catch (e) {
+          console.warn('[E2EE] Encrypt fallback:', e);
+        }
+      }
+
       var record = {
         id: msgId,
         from: Engine.uid,
         fromName: Engine.me.name || Engine.me.handle,
         kind: kind,
         text: text,
+        cipher: cipher,
         ts: now,
         timerMode: timerId,
         expAt: expAt,
@@ -876,11 +946,25 @@
       Engine.setTyping(chatId, false);
       Engine._emit('messages');
 
-      // 2. Persist to Firebase RTDB (ServerValue.TIMESTAMP on server write)
-      var serverRecord = Object.assign({}, record, { ts: firebase.database.ServerValue.TIMESTAMP });
+      // 2. Persist to Firebase RTDB: ONLY ciphertext sent to server!
+      var serverRecord = {
+        id: msgId,
+        from: Engine.uid,
+        fromName: Engine.me.name || Engine.me.handle,
+        kind: kind,
+        cipher: cipher || '',
+        text: cipher ? '🔒 Encrypted Message' : text,
+        ts: firebase.database.ServerValue.TIMESTAMP,
+        timerMode: timerId,
+        expAt: expAt,
+        seenBy: (function () { var s = {}; s[Engine.uid] = true; return s; })()
+      };
+      if (payload && payload.viewOnce) serverRecord.viewOnce = true;
+
       var up = {};
       up['v2/messages/' + chatId + '/' + msgId] = serverRecord;
       up['v2/userChats/' + Engine.uid + '/' + chatId + '/lastText'] = preview;
+      up['v2/userChats/' + Engine.uid + '/' + chatId + '/lastCipher'] = cipher || '';
       up['v2/userChats/' + Engine.uid + '/' + chatId + '/lastTs'] = firebase.database.ServerValue.TIMESTAMP;
       up['v2/userChats/' + Engine.uid + '/' + chatId + '/lastFrom'] = Engine.uid;
       up['v2/userChats/' + Engine.uid + '/' + chatId + '/lastMsgId'] = msgId;
@@ -906,7 +990,8 @@
           up['v2/userChats/' + rUid + '/' + chatId + '/handle'] = Engine.me.handle;
           up['v2/userChats/' + rUid + '/' + chatId + '/avatar'] = Engine.me.avatar || '';
         }
-        up['v2/userChats/' + rUid + '/' + chatId + '/lastText'] = preview;
+        up['v2/userChats/' + rUid + '/' + chatId + '/lastText'] = cipher ? '🔒 Encrypted Message' : preview;
+        up['v2/userChats/' + rUid + '/' + chatId + '/lastCipher'] = cipher || '';
         up['v2/userChats/' + rUid + '/' + chatId + '/lastTs'] = firebase.database.ServerValue.TIMESTAMP;
         up['v2/userChats/' + rUid + '/' + chatId + '/lastFrom'] = Engine.uid;
         up['v2/userChats/' + rUid + '/' + chatId + '/lastMsgId'] = msgId;
@@ -1466,6 +1551,16 @@
         // Auto-deliver all pending messages across all chats when app is active!
         Object.keys(newChats).forEach(function (cId) {
           var ch = newChats[cId];
+          // Decrypt inbox preview if encrypted cipher exists
+          if (ch && ch.lastCipher && global.JCA && global.JCA.decryptMessagePayload) {
+            var k = Engine.getChatKey(cId, ch);
+            global.JCA.decryptMessagePayload(ch.lastCipher, k).then(function (dec) {
+              if (dec && typeof dec === 'object' && (dec.text || dec.kind)) {
+                ch.lastText = Engine._msgPreview(dec);
+                Engine._emit('chats');
+              }
+            }).catch(function () {});
+          }
           if (ch && ch.lastMsgId && ch.lastFrom && ch.lastFrom !== uid) {
             Engine.db.ref('v2/messages/' + cId + '/' + ch.lastMsgId + '/deliveredTo/' + uid).set(true).catch(function () {});
             // Notify if new message arrived

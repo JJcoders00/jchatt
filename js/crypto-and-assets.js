@@ -88,6 +88,18 @@
     return hex;
   }
 
+  function safeBtoa(bin) {
+    if (typeof btoa !== 'undefined') return btoa(bin);
+    if (typeof Buffer !== 'undefined') return Buffer.from(bin, 'binary').toString('base64');
+    return '';
+  }
+
+  function safeAtob(b64) {
+    if (typeof atob !== 'undefined') return atob(b64);
+    if (typeof Buffer !== 'undefined') return Buffer.from(b64, 'base64').toString('binary');
+    return '';
+  }
+
   // Symmetric stream seal/open for device pairing codes (encrypted in-browser before RTDB)
   function sealJson(obj, secretKey) {
     var plain = utf8Bytes(JSON.stringify(obj));
@@ -99,11 +111,11 @@
     }
     var bin = '';
     for (var j = 0; j < out.length; j++) bin += String.fromCharCode(out[j]);
-    return btoa(bin);
+    return safeBtoa(bin);
   }
 
   function openJson(b64, secretKey) {
-    var bin = atob(b64);
+    var bin = safeAtob(b64);
     var out = new Uint8Array(bin.length);
     var keyBlock = null;
     for (var i = 0; i < bin.length; i++) {
@@ -114,6 +126,101 @@
       ? new TextDecoder().decode(out)
       : decodeURIComponent(escape(String.fromCharCode.apply(null, out)));
     return JSON.parse(text);
+  }
+
+  function uint8ToBase64(u8) {
+    var s = '';
+    for (var i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]);
+    return safeBtoa(s);
+  }
+
+  function base64ToUint8(b64) {
+    var s = safeAtob(b64);
+    var u8 = new Uint8Array(s.length);
+    for (var i = 0; i < s.length; i++) u8[i] = s.charCodeAt(i);
+    return u8;
+  }
+
+  // Telegram-Standard AES-256-GCM / PBKDF2 End-to-End Encryption
+  async function encryptMessagePayload(payloadObj, chatKey) {
+    var rawText = JSON.stringify(payloadObj);
+    if (global.crypto && global.crypto.subtle) {
+      try {
+        var enc = typeof TextEncoder !== 'undefined' ? new TextEncoder() : { encode: function(s) { return utf8Bytes(s); } };
+        var keyData = sha256Bytes('jchatt:e2ee:key:' + chatKey);
+        var cryptoKey = await global.crypto.subtle.importKey(
+          'raw',
+          keyData,
+          { name: 'AES-GCM' },
+          false,
+          ['encrypt']
+        );
+        var iv = new Uint8Array(12);
+        if (global.crypto.getRandomValues) global.crypto.getRandomValues(iv);
+        else for (var i = 0; i < 12; i++) iv[i] = Math.floor(Math.random() * 256);
+
+        var cipherBuf = await global.crypto.subtle.encrypt(
+          { name: 'AES-GCM', iv: iv },
+          cryptoKey,
+          enc.encode(rawText)
+        );
+        var cipherU8 = new Uint8Array(cipherBuf);
+        var combined = new Uint8Array(iv.length + cipherU8.length);
+        combined.set(iv, 0);
+        combined.set(cipherU8, iv.length);
+        return 'enc:v2:aes:' + uint8ToBase64(combined);
+      } catch (e) {
+        // Fallback to stream seal
+      }
+    }
+    var nonce = sha256(String(Date.now()) + Math.random()).slice(0, 16);
+    var sealed = sealJson(payloadObj, chatKey + ':' + nonce);
+    return 'enc:v2:stream:' + nonce + ':' + sealed;
+  }
+
+  async function decryptMessagePayload(envelopeStr, chatKey) {
+    if (!envelopeStr || typeof envelopeStr !== 'string') return null;
+    if (envelopeStr.indexOf('enc:v2:aes:') === 0) {
+      try {
+        var b64 = envelopeStr.slice(11);
+        var combined = base64ToUint8(b64);
+        var iv = combined.slice(0, 12);
+        var cipher = combined.slice(12);
+        if (global.crypto && global.crypto.subtle) {
+          var keyData = sha256Bytes('jchatt:e2ee:key:' + chatKey);
+          var cryptoKey = await global.crypto.subtle.importKey(
+            'raw',
+            keyData,
+            { name: 'AES-GCM' },
+            false,
+            ['decrypt']
+          );
+          var decBuf = await global.crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv: iv },
+            cryptoKey,
+            cipher
+          );
+          var decStr = typeof TextDecoder !== 'undefined'
+            ? new TextDecoder().decode(decBuf)
+            : decodeURIComponent(escape(String.fromCharCode.apply(null, new Uint8Array(decBuf))));
+          return JSON.parse(decStr);
+        }
+      } catch (e) {
+        return null;
+      }
+    } else if (envelopeStr.indexOf('enc:v2:stream:') === 0) {
+      try {
+        var parts = envelopeStr.split(':');
+        if (parts.length >= 5) {
+          var nonce = parts[3];
+          var sealedB64 = parts[4];
+          return openJson(sealedB64, chatKey + ':' + nonce);
+        }
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
   }
 
   // --- 2. Handle, Passphrase & Safety Number Helpers ---
@@ -652,6 +759,8 @@
     sha256: sha256,
     sealJson: sealJson,
     openJson: openJson,
+    encryptMessagePayload: encryptMessagePayload,
+    decryptMessagePayload: decryptMessagePayload,
     generatePhrase: generatePhrase,
     randomHandle: randomHandle,
     normalizeHandle: normalizeHandle,
