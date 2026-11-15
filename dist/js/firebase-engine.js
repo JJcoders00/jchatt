@@ -52,14 +52,20 @@
     auth: null,
     db: null,
     uid: null,
-    me: null,
+    me: (function () {
+      try { return JSON.parse(localStorage.getItem('jchatt_cache_me') || 'null'); } catch (e) { return null; }
+    })(),
     connected: false,
     ready: false,
     listeners: new Set(),
 
-    // Live reactive mirrors synced from /v2/
-    chats: {},          // chatId -> chat summary from /v2/userChats/{uid}/{chatId}
-    messagesByChat: {}, // chatId -> { msgId -> msgObj }
+    // Live reactive mirrors synced from /v2/ (pre-warmed from local Telegram-style cache for 0ms startup)
+    chats: (function () {
+      try { return JSON.parse(localStorage.getItem('jchatt_cache_chats') || '{}'); } catch (e) { return {}; }
+    })(),
+    messagesByChat: (function () {
+      try { return JSON.parse(localStorage.getItem('jchatt_cache_msgs') || '{}'); } catch (e) { return {}; }
+    })(),
     pendingByChat: {},  // chatId -> { msgId -> optimistic msgObj }
     typingByChat: {},   // chatId -> { uid -> { name, ts } }
     peerPresence: {},   // uid -> { online, lastSeen, name, handle, avatar, bio }
@@ -274,6 +280,7 @@
         }).catch(function () {});
       }
       Engine.me = prof;
+      try { localStorage.setItem('jchatt_cache_me', JSON.stringify(prof)); } catch (e) {}
       return prof;
     },
 
@@ -547,6 +554,7 @@
           delete Engine.pendingByChat[chatId][val.id];
         }
         Engine.messagesByChat[chatId][val.id] = val;
+        Engine._saveMsgsCache();
         if (val.from !== Engine.uid) {
           // Mark as delivered on receipt (Grey double tick)
           if (!val.deliveredTo || !val.deliveredTo[Engine.uid]) {
@@ -568,6 +576,7 @@
         if (!val) return;
         val.id = val.id || snap.key;
         Engine.messagesByChat[chatId][val.id] = val;
+        Engine._saveMsgsCache();
         Engine._emit('messages');
       });
 
@@ -1344,6 +1353,7 @@
         });
         _hasLoadedInitialChats = true;
         Engine.chats = newChats;
+        try { localStorage.setItem('jchatt_cache_chats', JSON.stringify(newChats)); } catch (e) {}
         if (Engine._activeChatId && Engine.chats[Engine._activeChatId] && Engine.chats[Engine._activeChatId].unread > 0) {
           Engine.chats[Engine._activeChatId].unread = 0;
           Engine.db.ref('v2/userChats/' + uid + '/' + Engine._activeChatId + '/unread').set(0).catch(function () {});
@@ -1390,7 +1400,18 @@
       if (Engine._incomingCallsRef) { Engine._incomingCallsRef.off(); Engine._incomingCallsRef = null; }
     },
 
+    _saveMsgsCache: function () {
+      try {
+        localStorage.setItem('jchatt_cache_msgs', JSON.stringify(Engine.messagesByChat));
+      } catch (e) {}
+    },
+
     _resetMirrors: function () {
+      try {
+        localStorage.removeItem('jchatt_cache_chats');
+        localStorage.removeItem('jchatt_cache_msgs');
+        localStorage.removeItem('jchatt_cache_me');
+      } catch (e) {}
       Engine.chats = {};
       Engine.messagesByChat = {};
       Engine.pendingByChat = {};
