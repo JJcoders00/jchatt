@@ -1,0 +1,47 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Dark Background -->
+    <path
+        android:fillColor="#1c2128"
+        android:pathData="M0,0h108v108h-108z"/>
+    <!-- Calculator Body -->
+    <path
+        android:fillColor="#2d333b"
+        android:pathData="M24,18h60a8,8 0 0,1 8,8v56a8,8 0 0,1 -8,8h-60a8,8 0 0,1 -8,-8v-56a8,8 0 0,1 8,-8z"/>
+    <!-- Display Screen -->
+    <path
+        android:fillColor="#444c56"
+        android:pathData="M30,26h48a4,4 0 0,1 4,4v14a4,4 0 0,1 -4,4h-48a4,4 0 0,1 -4,-4v-14a4,4 0 0,1 4,-4z"/>
+    <!-- Buttons (+) (-) (×) (=) -->
+    <!-- Plus -->
+    <path
+        android:fillColor="#00a884"
+        android:pathData="M40,54h4v4h-4v-4z M42,52v8 M38,56h8"
+        android:strokeColor="#00a884"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"/>
+    <!-- Minus -->
+    <path
+        android:fillColor="#539bf5"
+        android:pathData="M66,56h8"
+        android:strokeColor="#539bf5"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"/>
+    <!-- Multiply -->
+    <path
+        android:fillColor="#539bf5"
+        android:pathData="M38,72l8,8 M46,72l-8,8"
+        android:strokeColor="#539bf5"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"/>
+    <!-- Equals -->
+    <path
+        android:fillColor="#00a884"
+        android:pathData="M66,74h8 M66,78h8"
+        android:strokeColor="#00a884"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"/>
+</vector>

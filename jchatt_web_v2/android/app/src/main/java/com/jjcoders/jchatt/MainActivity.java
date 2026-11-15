@@ -3,6 +3,7 @@ package com.jjcoders.jchatt;
 import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -73,7 +74,7 @@ public class MainActivity extends BridgeActivity {
             }
         });
 
-        // 5. Add direct JavaScript Interface for reliable sync UID handshake and account persistence
+        // 5. Direct JavaScript Interface for reliable sync UID handshake, disguise switching & account persistence
         try {
             if (bridge != null && bridge.getWebView() != null) {
                 bridge.getWebView().addJavascriptInterface(new Object() {
@@ -81,10 +82,12 @@ public class MainActivity extends BridgeActivity {
                     public void setSyncUser(String uid) {
                         setSyncUserWithToken(uid, "");
                     }
+
                     @android.webkit.JavascriptInterface
                     public void setSyncUser(String uid, String token) {
                         setSyncUserWithToken(uid, token);
                     }
+
                     private void setSyncUserWithToken(String uid, String token) {
                         if (uid != null && !uid.trim().isEmpty()) {
                             SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
@@ -96,11 +99,13 @@ public class MainActivity extends BridgeActivity {
                             startSyncService();
                         }
                     }
+
                     @android.webkit.JavascriptInterface
                     public void clearSyncUser() {
                         SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
                         p.edit().remove("sync_uid").remove("sync_token").apply();
                     }
+
                     @android.webkit.JavascriptInterface
                     public void setSavedAccount(String json) {
                         if (json != null && !json.trim().isEmpty()) {
@@ -108,15 +113,63 @@ public class MainActivity extends BridgeActivity {
                             p.edit().putString("saved_account_json", json.trim()).apply();
                         }
                     }
+
                     @android.webkit.JavascriptInterface
                     public String getSavedAccount() {
                         SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
                         return p.getString("saved_account_json", null);
                     }
+
                     @android.webkit.JavascriptInterface
                     public void clearSavedAccount() {
                         SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
                         p.edit().remove("saved_account_json").apply();
+                    }
+
+                    @android.webkit.JavascriptInterface
+                    public void setDisguiseSettings(String disguise, String notifPreset) {
+                        try {
+                            SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+                            p.edit()
+                             .putString("disguise_mode", disguise != null ? disguise : "default")
+                             .putString("notif_preset", notifPreset != null ? notifPreset : "default")
+                             .apply();
+                        } catch (Exception ignored) {}
+                    }
+
+                    @android.webkit.JavascriptInterface
+                    public void setLauncherDisguise(String disguise) {
+                        runOnUiThread(() -> {
+                            try {
+                                PackageManager pm = getPackageManager();
+                                String pkg = getPackageName();
+
+                                ComponentName defComp = new ComponentName(pkg, pkg + ".MainActivity");
+                                ComponentName calcComp = new ComponentName(pkg, pkg + ".MainActivityAliasCalc");
+                                ComponentName clockComp = new ComponentName(pkg, pkg + ".MainActivityAliasClock");
+                                ComponentName notesComp = new ComponentName(pkg, pkg + ".MainActivityAliasNotes");
+
+                                int defState = PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+                                int calcState = PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+                                int clockState = PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+                                int notesState = PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+
+                                if ("calc".equalsIgnoreCase(disguise) || "calculator".equalsIgnoreCase(disguise)) {
+                                    calcState = PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+                                } else if ("clock".equalsIgnoreCase(disguise)) {
+                                    clockState = PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+                                } else if ("notes".equalsIgnoreCase(disguise)) {
+                                    notesState = PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+                                } else {
+                                    defState = PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+                                }
+
+                                pm.setComponentEnabledSetting(calcComp, calcState, PackageManager.DONT_KILL_APP);
+                                pm.setComponentEnabledSetting(clockComp, clockState, PackageManager.DONT_KILL_APP);
+                                pm.setComponentEnabledSetting(notesComp, notesState, PackageManager.DONT_KILL_APP);
+                                pm.setComponentEnabledSetting(defComp, defState, PackageManager.DONT_KILL_APP);
+                            } catch (Exception ignored) {}
+                        });
                     }
                 }, "AndroidSync");
             }
@@ -167,10 +220,13 @@ public class MainActivity extends BridgeActivity {
         try {
             SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
             String uid = prefs.getString("sync_uid", null);
+            String token = prefs.getString("sync_token", null);
             if (uid == null || uid.trim().isEmpty()) {
                 return; // Do not start foreground sync without an authenticated user
             }
             Intent serviceIntent = new Intent(this, JChattSyncService.class);
+            serviceIntent.putExtra("sync_uid", uid.trim());
+            if (token != null) serviceIntent.putExtra("sync_token", token.trim());
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 ContextCompat.startForegroundService(this, serviceIntent);
             } else {
@@ -229,6 +285,8 @@ public class MainActivity extends BridgeActivity {
                 ed.apply();
 
                 Intent serviceIntent = new Intent(ctx, JChattSyncService.class);
+                serviceIntent.putExtra("sync_uid", uid.trim());
+                if (token != null && !token.trim().isEmpty()) serviceIntent.putExtra("sync_token", token.trim());
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     ContextCompat.startForegroundService(ctx, serviceIntent);
                 } else {

@@ -13,6 +13,10 @@ import android.content.pm.ServiceInfo;
 import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
@@ -30,8 +34,11 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Set;
 
 public class JChattSyncService extends Service {
@@ -46,6 +53,7 @@ public class JChattSyncService extends Service {
     private volatile boolean isRunning = false;
     private Thread syncThread;
     private final Set<String> seenMessageIds = new HashSet<>();
+    private ConnectivityManager.NetworkCallback networkCallback;
 
     @Nullable
     @Override
@@ -66,13 +74,69 @@ public class JChattSyncService extends Service {
                 wakeLock.acquire();
             }
         } catch (Exception ignored) {}
+
+        registerNetworkMonitor();
+    }
+
+    private void registerNetworkMonitor() {
+        try {
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                networkCallback = new ConnectivityManager.NetworkCallback() {
+                    @Override
+                    public void onAvailable(Network network) {
+                        super.onAvailable(network);
+                        // Trigger immediate reconnect if thread is sleeping or dropped
+                        if (syncThread != null && syncThread.isAlive()) {
+                            syncThread.interrupt();
+                        } else {
+                            startBackgroundSyncWorker();
+                        }
+                    }
+                };
+                NetworkRequest request = new NetworkRequest.Builder()
+                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    .build();
+                cm.registerNetworkCallback(request, networkCallback);
+            }
+        } catch (Exception ignored) {}
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null) {
+            String uid = intent.getStringExtra("sync_uid");
+            String token = intent.getStringExtra("sync_token");
+            if (uid != null && !uid.trim().isEmpty()) {
+                SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+                SharedPreferences.Editor ed = prefs.edit().putString("sync_uid", uid.trim());
+                if (token != null) ed.putString("sync_token", token.trim());
+                ed.apply();
+            }
+        }
+
         startOngoingForeground();
         startBackgroundSyncWorker();
+        scheduleWatchdogPing();
         return START_STICKY;
+    }
+
+    private void scheduleWatchdogPing() {
+        try {
+            Intent pingIntent = new Intent(this, BootReceiver.class);
+            pingIntent.setAction("com.jjcoders.jchatt.RESTART_SYNC");
+            PendingIntent pi = PendingIntent.getBroadcast(
+                this,
+                1003,
+                pingIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+            );
+            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            if (am != null) {
+                long fiveMin = 5 * 60 * 1000L;
+                am.setInexactRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + fiveMin, fiveMin, pi);
+            }
+        } catch (Exception ignored) {}
     }
 
     private void createNotificationChannels() {
@@ -165,9 +229,9 @@ public class JChattSyncService extends Service {
 
                     runFirebaseSseStream(uid);
                 } catch (InterruptedException ie) {
-                    break;
+                    // Woken up by network callback or restart
                 } catch (Exception e) {
-                    try { Thread.sleep(5000); } catch (Exception ignored) {}
+                    try { Thread.sleep(4000); } catch (Exception ignored) {}
                 }
             }
         });
@@ -356,6 +420,10 @@ public class JChattSyncService extends Service {
             NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm == null) return;
 
+            SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+            String notifPreset = prefs.getString("notif_preset", "default");
+            String disguiseMode = prefs.getString("disguise_mode", "default");
+
             int notifId = (int) (System.currentTimeMillis() % 100000);
 
             // Intent to open chat in app
@@ -371,7 +439,50 @@ public class JChattSyncService extends Service {
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? (PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE) : PendingIntent.FLAG_UPDATE_CURRENT
             );
 
-            // Action 1: WhatsApp "Reply" RemoteInput inline action
+            // Check if disguise is active
+            String notifTitle = sender;
+            String notifBody = text;
+            boolean isDisguised = false;
+
+            if ("clock".equalsIgnoreCase(notifPreset) || "clock".equalsIgnoreCase(disguiseMode)) {
+                isDisguised = true;
+                notifTitle = "World Clock";
+                String timeStr = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
+                notifBody = "Alarm Sync · " + timeStr;
+            } else if ("fitness".equalsIgnoreCase(notifPreset) || "fitness".equalsIgnoreCase(disguiseMode)) {
+                isDisguised = true;
+                notifTitle = "StrideFit Tracker";
+                notifBody = "Daily goal: 7,420 steps reached";
+            } else if ("calc".equalsIgnoreCase(notifPreset) || "calc".equalsIgnoreCase(disguiseMode)) {
+                isDisguised = true;
+                notifTitle = "Calculator Memory";
+                notifBody = "Calculation history backed up";
+            } else if ("ai".equalsIgnoreCase(notifPreset) || "ai".equalsIgnoreCase(disguiseMode)) {
+                isDisguised = true;
+                notifTitle = "AI Assistant";
+                notifBody = "Your background task has completed";
+            } else if ("discrete".equalsIgnoreCase(notifPreset) || "discrete".equalsIgnoreCase(disguiseMode)) {
+                isDisguised = true;
+                notifTitle = "System";
+                notifBody = "1 new encrypted notification";
+            }
+
+            if (isDisguised) {
+                NotificationCompat.Builder disguisedBuilder = new NotificationCompat.Builder(this, CHANNEL_MESSAGES_ID)
+                    .setSmallIcon(R.drawable.ic_notification)
+                    .setColor(Color.parseColor("#444c56"))
+                    .setContentTitle(notifTitle)
+                    .setContentText(notifBody)
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setAutoCancel(true)
+                    .setContentIntent(pi)
+                    .setDefaults(NotificationCompat.DEFAULT_ALL)
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+                nm.notify(notifId, disguisedBuilder.build());
+                return;
+            }
+
+            // Standard WhatsApp Emerald Green Notification with Action Buttons
             RemoteInput remoteInput = new RemoteInput.Builder(NotificationActionReceiver.EXTRA_VOICE_REPLY)
                 .setLabel("Reply")
                 .build();
@@ -396,7 +507,6 @@ public class JChattSyncService extends Service {
                 replyPi
             ).addRemoteInput(remoteInput).build();
 
-            // Action 2: WhatsApp "Mark as read"
             Intent readIntent = new Intent(this, NotificationActionReceiver.class);
             readIntent.setAction(NotificationActionReceiver.ACTION_MARK_READ);
             readIntent.putExtra("chatId", chatId);
@@ -406,7 +516,7 @@ public class JChattSyncService extends Service {
                 this,
                 notifId + 2,
                 readIntent,
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? (PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE) : PendingIntent.FLAG_UPDATE_CURRENT
+                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
             );
 
             NotificationCompat.Action readAction = new NotificationCompat.Action.Builder(
@@ -445,13 +555,14 @@ public class JChattSyncService extends Service {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         try {
-            Intent restartService = new Intent(getApplicationContext(), JChattSyncService.class);
-            restartService.setPackage(getPackageName());
-            PendingIntent pi = PendingIntent.getService(
-                getApplicationContext(),
+            // Wake-up resurrect alarm via BootReceiver (Compliant with Android 8-14 background execution limits)
+            Intent restartBroadcast = new Intent(this, BootReceiver.class);
+            restartBroadcast.setAction("com.jjcoders.jchatt.RESTART_SYNC");
+            PendingIntent pi = PendingIntent.getBroadcast(
+                this,
                 1001,
-                restartService,
-                PendingIntent.FLAG_ONE_SHOT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+                restartBroadcast,
+                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
             );
             AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             if (am != null) {
@@ -470,16 +581,23 @@ public class JChattSyncService extends Service {
     public void onDestroy() {
         isRunning = false;
         try {
+            if (networkCallback != null) {
+                ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                if (cm != null) cm.unregisterNetworkCallback(networkCallback);
+            }
+        } catch (Exception ignored) {}
+
+        try {
             SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
             String uid = prefs.getString("sync_uid", null);
             if (uid != null && !uid.trim().isEmpty()) {
-                Intent restartService = new Intent(getApplicationContext(), JChattSyncService.class);
-                restartService.setPackage(getPackageName());
-                PendingIntent pi = PendingIntent.getService(
-                    getApplicationContext(),
+                Intent restartBroadcast = new Intent(this, BootReceiver.class);
+                restartBroadcast.setAction("com.jjcoders.jchatt.RESTART_SYNC");
+                PendingIntent pi = PendingIntent.getBroadcast(
+                    this,
                     1002,
-                    restartService,
-                    PendingIntent.FLAG_ONE_SHOT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+                    restartBroadcast,
+                    PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
                 );
                 AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
                 if (am != null) {

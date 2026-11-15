@@ -423,6 +423,7 @@
         }).then(function (res) {
           if (res && res.success) {
             LV.locked = false;
+            LV.showPinInstead = false;
             LV.pinBuffer = '';
             LV.pinError = '';
             if (global.JCSOUND && global.JCSOUND.playMsgReceived) {
@@ -1222,6 +1223,7 @@
         }
         if (!LV.settings.lockPin || entered === LV.settings.lockPin) {
           LV.locked = false;
+          LV.showPinInstead = false;
           go('chats', 'push');
         } else {
           LV.pinError = 'Incorrect PIN';
@@ -1231,7 +1233,21 @@
       }
       render();
     },
-    locknow: function () { LV.locked = true; go('lockscreen', 'push'); if (LV.settings.biometric) setTimeout(tryBiometricUnlock, 350); },
+    show_pin_pad: function () {
+      LV.showPinInstead = true;
+      render();
+    },
+    show_bio_screen: function () {
+      LV.showPinInstead = false;
+      render();
+      tryBiometricUnlock();
+    },
+    locknow: function () {
+      LV.locked = true;
+      LV.showPinInstead = false;
+      go('lockscreen', 'push');
+      if (LV.settings.biometric) setTimeout(tryBiometricUnlock, 350);
+    },
     lockvault: function () { LV.vaultUnlocked = false; go('shield', 'pop'); },
     opendecoy: function (el) { LV.activeDecoyId = el.getAttribute('data-id'); render(); },
     closeDecoy: function () { LV.activeDecoyId = null; render(); },
@@ -1245,17 +1261,29 @@
         render();
       }
     },
-    exitduress: function () { LV.duressMode = false; LV.locked = true; go('lockscreen', 'pop'); },
+    exitduress: function () { LV.duressMode = false; LV.locked = true; LV.showPinInstead = false; go('lockscreen', 'pop'); },
     dsel: function (el) {
       var v = el.getAttribute('data-v');
       LV.settings.disguise = v;
       LV.save();
+      try {
+        if (window.AndroidSync) {
+          if (window.AndroidSync.setLauncherDisguise) window.AndroidSync.setLauncherDisguise(v);
+          if (window.AndroidSync.setDisguiseSettings) window.AndroidSync.setDisguiseSettings(v, LV.settings.notifPreset || 'default');
+        }
+      } catch (e) {}
       toast('Disguise set: ' + v);
       render();
     },
     nsel: function (el) {
-      LV.settings.notifPreset = el.getAttribute('data-v');
+      var v = el.getAttribute('data-v');
+      LV.settings.notifPreset = v;
       LV.save();
+      try {
+        if (window.AndroidSync && window.AndroidSync.setDisguiseSettings) {
+          window.AndroidSync.setDisguiseSettings(LV.settings.disguise || 'default', v);
+        }
+      } catch (e) {}
       toast('Notification disguise saved');
       render();
     },
@@ -1649,6 +1677,11 @@
 
   function boot() {
     applyRootTheme();
+    try {
+      if (window.AndroidSync && window.AndroidSync.setDisguiseSettings) {
+        window.AndroidSync.setDisguiseSettings(LV.settings.disguise || 'default', LV.settings.notifPreset || 'default');
+      }
+    } catch (e) {}
     try {
       var Cap = global.Capacitor;
       var Plugins = (Cap && Cap.Plugins) || global.Plugins;

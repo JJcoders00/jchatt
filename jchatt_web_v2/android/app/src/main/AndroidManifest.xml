@@ -17,6 +17,7 @@
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
+            android:enabled="true"
             android:exported="true">
 
             <intent-filter>
@@ -25,6 +26,51 @@
             </intent-filter>
 
         </activity>
+
+        <!-- Disguise 1: Calculator Launcher Alias -->
+        <activity-alias
+            android:name=".MainActivityAliasCalc"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_calc"
+            android:roundIcon="@drawable/ic_launcher_calc"
+            android:label="Calculator"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Disguise 2: Clock Launcher Alias -->
+        <activity-alias
+            android:name=".MainActivityAliasClock"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_clock"
+            android:roundIcon="@drawable/ic_launcher_clock"
+            android:label="Clock"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <!-- Disguise 3: Notes Launcher Alias -->
+        <activity-alias
+            android:name=".MainActivityAliasNotes"
+            android:targetActivity=".MainActivity"
+            android:icon="@drawable/ic_launcher_notes"
+            android:roundIcon="@drawable/ic_launcher_notes"
+            android:label="Notes"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -35,18 +81,22 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
-            <service
+
+        <service
             android:name="io.capawesome.capacitorjs.plugins.foregroundservice.AndroidForegroundService"
             android:foregroundServiceType="dataSync"
             android:stopWithTask="false"
             android:exported="false" />
 
+        <!-- JChatt Background Sync Service running in isolated :sync process (Never killed on task removal / RAM clear) -->
         <service
             android:name=".JChattSyncService"
+            android:process=":sync"
             android:foregroundServiceType="dataSync"
             android:stopWithTask="false"
             android:exported="false" />
 
+        <!-- Boot & Keepalive Broadcast Receiver -->
         <receiver
             android:name=".BootReceiver"
             android:enabled="true"
@@ -56,9 +106,12 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.USER_PRESENT" />
                 <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+                <action android:name="com.jjcoders.jchatt.RESTART_SYNC" />
             </intent-filter>
         </receiver>
 
+        <!-- WhatsApp Inline Reply & Mark Read Action Receiver -->
         <receiver
             android:name=".NotificationActionReceiver"
             android:enabled="true"
@@ -71,6 +124,7 @@
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
@@ -82,4 +136,5 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 </manifest>

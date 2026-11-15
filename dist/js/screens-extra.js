@@ -30,9 +30,9 @@
         return '<i class="' + (i < len ? 'f' : '') + '"></i>';
       }).join('');
       var keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'back', '0', 'ok'];
-      var bioBtn = (mode === 'app' || LV.settings.biometric)
-        ? '<button class="btn" style="margin-top:16px;background:#00a884;color:#fff;border-radius:24px;box-shadow:0 3px 0 #075e54;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:700" data-act="dobioauth">'
-          + I('fingerprint', 20) + ' Touch Fingerprint Sensor'
+      var bioBtn = (mode === 'app' && LV.settings.biometric)
+        ? '<button style="margin-top:14px;background:none;border:none;color:#53bdeb;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px" data-act="show_bio_screen">'
+          + I('fingerprint', 18) + ' Use Fingerprint Sensor'
           + '</button>'
         : '';
       return '<div class="scr" style="background:var(--ink);color:#fff">'
@@ -52,8 +52,37 @@
         + '</div></div>';
     }
 
+    function biometricLockScreen() {
+      return '<div class="scr" style="background:#0b141a;color:#fff;display:flex;flex-direction:column">'
+        + hdr('JChatt Locked', 'Protected Vault', '', '')
+        + '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center">'
+        + '<div style="width:110px;height:110px;border-radius:55px;background:rgba(0,168,132,0.12);border:2px solid rgba(0,168,132,0.4);display:flex;align-items:center;justify-content:center;margin-bottom:24px;box-shadow:0 0 32px rgba(0,168,132,0.25);animation:pulse 2s infinite ease-in-out">'
+        + '<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#00a884" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
+        + '<path d="M12 2a10 10 0 0 0-8 8c0 4.4 2.5 8.2 6.2 9.8"></path>'
+        + '<path d="M12 6a6 6 0 0 0-6 6c0 2.6 1.3 4.9 3.3 6.3"></path>'
+        + '<path d="M12 10a2 2 0 0 0-2 2c0 1.2.7 2.2 1.7 2.7"></path>'
+        + '<path d="M14 13.5a1.5 1.5 0 0 1-1.5 1.5"></path>'
+        + '<path d="M16 11a4 4 0 0 1-2.5 3.7"></path>'
+        + '<path d="M18 9a8 8 0 0 1-3.5 6.7"></path>'
+        + '<path d="M20 7a10 10 0 0 1-4.2 8.3"></path>'
+        + '</svg>'
+        + '</div>'
+        + '<h2 style="font-size:22px;font-weight:700;color:#e9edef;margin:0 0 8px 0">JChatt Locked</h2>'
+        + '<p style="font-size:14px;color:#8696a0;margin:0 0 28px 0;max-width:260px;line-height:1.4">Touch the fingerprint sensor to unlock JChatt</p>'
+        + '<button class="btn" style="background:#00a884;color:#fff;border-radius:24px;padding:12px 32px;font-weight:700;font-size:15px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,168,132,0.3)" data-act="dobioauth">'
+        + I('fingerprint', 20) + ' Touch Sensor'
+        + '</button>'
+        + '<button style="margin-top:24px;background:none;border:none;color:#53bdeb;font-size:14px;font-weight:600;cursor:pointer;padding:10px" data-act="show_pin_pad">'
+        + 'Enter PIN instead'
+        + '</button>'
+        + '</div></div>';
+    }
+
     // --- 1. Lockscreen, Vault & Duress Decoy ---
     add('lockscreen', function () {
+      if (LV.settings.biometric && !LV.showPinInstead) {
+        return biometricLockScreen();
+      }
       return pinPad('JChatt Locked', 'Enter real PIN or Duress PIN', 'app', '');
     });
 

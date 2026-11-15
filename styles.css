@@ -91,10 +91,19 @@ input, textarea { -webkit-user-select: auto !important; user-select: auto !impor
   padding-top: env(safe-area-inset-top, 0px);
   display: flex;
   flex-direction: column;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
-.scr.push { animation: inR .26s cubic-bezier(.2, .8, .2, 1); }
-.scr.pop { animation: inL .26s cubic-bezier(.2, .8, .2, 1); }
-.scr.tab { animation: fi .18s ease; }
+.scr.push { animation: inR .24s cubic-bezier(.2, .8, .2, 1); }
+.scr.pop { animation: inL .24s cubic-bezier(.2, .8, .2, 1); }
+.scr.tab { animation: fi .16s ease; }
+@keyframes pulse {
+  0% { transform: scale(1); box-shadow: 0 0 16px rgba(0,168,132,0.2); }
+  50% { transform: scale(1.05); box-shadow: 0 0 36px rgba(0,168,132,0.45); }
+  100% { transform: scale(1); box-shadow: 0 0 16px rgba(0,168,132,0.2); }
+}
 @keyframes inR { from { opacity: .35; transform: translateX(28px); } }
 @keyframes inL { from { opacity: .35; transform: translateX(-28px); } }
 @keyframes fi { from { opacity: 0; transform: translateY(6px); } }
