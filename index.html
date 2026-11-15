@@ -16,17 +16,10 @@
 </head>
 <body>
   <div id="app">
-    <div class="studio">
-      <div class="proto">
-        <div class="phone">
-          <div class="scr center" style="background:var(--ink);color:#fff">
-            <img src="./images/mascot/mascot_hero.png" width="112" height="112" alt="JChatt" style="object-fit:contain"/>
-            <div class="wordmark">jchatt</div>
-            <p class="mute">Private by architecture</p>
-            <div class="load"><i></i></div>
-          </div>
-        </div>
-      </div>
+    <div style="height:100vh;width:100vw;display:flex;align-items:center;justify-content:center;background:#0b141a;color:#fff;flex-direction:column;gap:16px;">
+      <img src="./images/mascot/mascot_hero.png" width="96" height="96" alt="JChatt" style="object-fit:contain"/>
+      <div style="font-size:24px;font-weight:800;letter-spacing:-0.5px">jchatt</div>
+      <p style="font-size:12px;opacity:0.6;margin:0">Private by architecture</p>
     </div>
   </div>
 
@@ -38,6 +31,7 @@
   <script src="./vendor/firebase-auth-compat.js"></script>
   <script src="./vendor/firebase-database-compat.js"></script>
   <script src="./js/crypto-and-assets.js"></script>
+  <script src="./js/sound-engine.js"></script>
   <script src="./js/firebase-engine.js"></script>
   <script src="./js/screens-core.js"></script>
   <script src="./js/screens-extra.js"></script>

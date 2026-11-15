@@ -217,39 +217,15 @@
   }
 
   function startForegroundKeepalive() {
-    try {
-      var Cap = global.Capacitor;
-      var Plugins = (Cap && Cap.Plugins) || global.Plugins;
-      var FS = Plugins && (Plugins.ForegroundService || (Cap && Cap.Plugins && Cap.Plugins.ForegroundService));
-      if (FS && FS.startForegroundService) {
-        FS.startForegroundService({
-          id: 7771,
-          title: 'JChatt Sovereign Sync',
-          body: 'Connected for private calls & messages',
-          smallIcon: 'ic_launcher',
-          silent: true,
-          serviceType: 1
-        }).catch(function (err) {
-          console.log('ForegroundService start err:', err);
-        });
-      }
-    } catch (e) {}
-  }
-
-  function fallbackWebNotification(title, opts) {
-    try {
-      if (global.Notification && Notification.permission === 'granted') {
-        var n = new Notification(title, opts);
-        n.onclick = function () {
-          try { global.focus(); } catch (e) {}
-          n.close();
-        };
-      }
-    } catch (e) {}
+    // Native JChattSyncService handles silent 24/7 background sync via native Java thread without spamming notification drawer
   }
 
   function sendNotification(title, body, icon) {
     ensureNotificationChannel();
+    var notifTitle = title || 'JChatt';
+    var notifBody = body || 'New encrypted message';
+    var notifIcon = icon || './favicon.svg';
+
     // 1. Android Capacitor Native Local Notification
     try {
       var Cap = global.Capacitor;
@@ -258,8 +234,8 @@
       if (LocalNotifs && LocalNotifs.schedule) {
         LocalNotifs.schedule({
           notifications: [{
-            title: title || 'JChatt',
-            body: body || '',
+            title: notifTitle,
+            body: notifBody,
             id: Math.floor(Math.random() * 900000) + 1000,
             channelId: 'jchatt_messages',
             smallIcon: 'ic_launcher',
@@ -270,29 +246,38 @@
       }
     } catch (err) {}
 
-    // 2. Standard Web & ServiceWorker PWA Notification API
+    // 2. Direct Web Notification (Desktop Chrome, Firefox, Safari, Edge)
     try {
-      var notifTitle = title || 'JChatt';
-      var notifOpts = {
-        body: body || '',
-        icon: icon || './favicon.svg',
-        badge: './favicon.svg',
-        vibrate: [200, 100, 200]
-      };
-      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
-        navigator.serviceWorker.ready.then(function (reg) {
-          if (reg && reg.showNotification) {
-            reg.showNotification(notifTitle, notifOpts).catch(function () {
-              fallbackWebNotification(notifTitle, notifOpts);
-            });
-          } else {
-            fallbackWebNotification(notifTitle, notifOpts);
-          }
-        }).catch(function () {
-          fallbackWebNotification(notifTitle, notifOpts);
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        var n = new Notification(notifTitle, {
+          body: notifBody,
+          icon: notifIcon,
+          badge: notifIcon,
+          tag: 'jchatt_' + Date.now()
         });
-      } else {
-        fallbackWebNotification(notifTitle, notifOpts);
+        n.onclick = function () {
+          try { global.focus(); } catch (e) {}
+          n.close();
+        };
+        return;
+      }
+    } catch (err) {
+      // Mobile Chrome may throw TypeError: Illegal Constructor, fall through to ServiceWorker
+    }
+
+    // 3. Fallback ServiceWorker Notification (Android Chrome / PWA)
+    try {
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+        navigator.serviceWorker.getRegistration().then(function (reg) {
+          if (reg && reg.showNotification) {
+            reg.showNotification(notifTitle, {
+              body: notifBody,
+              icon: notifIcon,
+              badge: notifIcon,
+              vibrate: [200, 100, 200]
+            }).catch(function () {});
+          }
+        }).catch(function () {});
       }
     } catch (e) {}
   }

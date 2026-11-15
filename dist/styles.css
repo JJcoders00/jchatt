@@ -48,7 +48,8 @@ body {
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; text-align: left; }
 button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
 svg { flex: none; }
-#app { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; width: 100vw; overflow-x: hidden; overflow-y: auto; }
+#app { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; width: 100%; overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.landing-page { flex: 1; width: 100%; min-height: 100vh; overflow-y: visible; touch-action: pan-y; -webkit-user-select: text !important; user-select: text !important; }
 .b-text, .b-text * { -webkit-user-select: text !important; user-select: text !important; }
 input, textarea { -webkit-user-select: auto !important; user-select: auto !important; }
 

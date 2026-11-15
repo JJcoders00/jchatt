@@ -1,48 +1,66 @@
-// Jchatt Service Worker for PWA
-const CACHE_NAME = 'jchatt-v1';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/css/style.css',
-  '/login/',
-  '/signup/',
-  '/feed/',
-  '/js/firebase.js',
-  '/js/auth.js',
-  '/js/chat.js',
-  '/js/app.js',
-  '/icon-192.png',
-  '/icon-512.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
-];
+// JChatt Sovereign Service Worker
+const CACHE_NAME = 'jchatt-v2-cache';
 
-// Install and Cache
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
+self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
 
-// Activate and Cleanup Old Caches
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
     caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    })
+      return Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)));
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch Strategy: Network First falling back to Cache
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
+// Pass-through network requests with live fallback
+self.addEventListener('fetch', (e) => {
+  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+});
+
+// Real-time Push Notification Handler for Web & PWA
+self.addEventListener('push', (e) => {
+  let data = { title: 'JChatt', body: 'New encrypted message' };
+  try {
+    if (e.data) data = e.data.json();
+  } catch (err) {}
+
+  e.waitUntil(
+    self.registration.showNotification(data.title || 'JChatt', {
+      body: data.body || '',
+      icon: './favicon.svg',
+      badge: './favicon.svg',
+      vibrate: [200, 100, 200],
+      data: data
+    })
+  );
+});
+
+// Message handler from web page to show notifications
+self.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'SHOW_NOTIFICATION') {
+    self.registration.showNotification(e.data.title || 'JChatt', {
+      body: e.data.body || '',
+      icon: './favicon.svg',
+      badge: './favicon.svg',
+      vibrate: [200, 100, 200]
+    });
+  }
+});
+
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (let i = 0; i < clientList.length; i++) {
+        let client = clientList[i];
+        if (client.url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (self.clients.openWindow) {
+        return self.clients.openWindow('/');
+      }
     })
   );
 });

@@ -70,9 +70,24 @@
     } catch (e) {}
   }
 
+  var isNativePlatform = !!(global.Capacitor && global.Capacitor.isNativePlatform && global.Capacitor.isNativePlatform());
+  var initialRoute = 'landing';
+  if (isNativePlatform) {
+    initialRoute = 'splash';
+  } else {
+    var p = (global.location.pathname || '').toLowerCase();
+    var hash = (global.location.hash || '').toLowerCase();
+    var sp = new URLSearchParams(global.location.search || '');
+    if (p === '/web' || p.indexOf('/web') === 0 || p === '/app' || hash === '#/web' || sp.has('app') || sp.has('invite') || sp.has('pair')) {
+      initialRoute = 'auth';
+    } else {
+      initialRoute = 'landing';
+    }
+  }
+
   var LV = {
     settings: loadPrefs(),
-    route: 'splash',
+    route: initialRoute,
     hist: [],
     anim: '',
     curChatId: null,
@@ -678,6 +693,13 @@
         ? ''
         : '<div class="banner"><span class="spin"></span><span>Connecting to JChatt cloud...</span></div>';
 
+      var notifBanner = '';
+      if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+        notifBanner = '<div class="banner" style="background:#00a884;color:#fff;cursor:pointer;padding:10px 16px;display:flex;align-items:center;gap:10px" data-act="reqnotif">'
+          + I('bell', 18) + '<div style="flex:1"><b style="display:block;font-size:13px">Enable notifications</b><span style="font-size:11px;opacity:0.9">Get notified when messages and calls arrive</span></div>'
+          + '<button class="pill" style="background:#fff;color:#008069;font-weight:700;font-size:12px;padding:6px 14px">Allow</button></div>';
+      }
+
       return '<div class="scr">'
         + hdr(
           '<span style="font-size:26px;font-weight:800;letter-spacing:-.04em">jchatt</span>',
@@ -686,6 +708,7 @@
           rb('search', 'data-go="search"') + ' ' + rb('qr', 'data-go="qr"')
         )
         + statusBanner
+        + notifBanner
         + '<div class="chips">'
         + chip('all', 'All', LV.filter === 'all')
         + chip('unread', 'Unread', LV.filter === 'unread')

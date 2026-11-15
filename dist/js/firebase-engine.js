@@ -138,7 +138,23 @@
         if (user) {
           Engine.uid = user.uid;
           Engine._attachGlobalListeners(user.uid);
+          try {
+            if (global.AndroidSync && global.AndroidSync.setSyncUser) {
+              global.AndroidSync.setSyncUser(user.uid);
+            }
+            var Cap = global.Capacitor;
+            var Plugins = (Cap && Cap.Plugins) || global.Plugins;
+            var Bio = Plugins && (Plugins.BiometricAuth || (Cap && Cap.Plugins && Cap.Plugins.BiometricAuth));
+            if (Bio && Bio.setSyncUser) {
+              Bio.setSyncUser({ uid: user.uid }).catch(function () {});
+            }
+          } catch (e) {}
         } else {
+          try {
+            if (global.AndroidSync && global.AndroidSync.clearSyncUser) {
+              global.AndroidSync.clearSyncUser();
+            }
+          } catch (e) {}
           Engine._detachAllListeners();
           Engine.uid = null;
           Engine.me = null;

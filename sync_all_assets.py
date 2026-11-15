@@ -2,6 +2,7 @@ import shutil, os
 
 files_to_sync = [
     'index.html',
+    'sw.js',
     'styles.css',
     'js/firebase-engine.js',
     'js/web-and-app.js',

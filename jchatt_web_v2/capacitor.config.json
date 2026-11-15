@@ -1,5 +1,19 @@
 {
   "appId": "com.jjcoders.jchatt",
   "appName": "Jchatt",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0,
+      "launchAutoHide": true,
+      "backgroundColor": "#0b141a",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
+    }
+  },
+  "server": {
+    "cleartext": true,
+    "androidScheme": "http"
+  }
 }

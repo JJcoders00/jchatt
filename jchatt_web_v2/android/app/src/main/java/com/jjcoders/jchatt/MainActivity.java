@@ -4,7 +4,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ServiceInfo;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -12,6 +12,7 @@ import android.os.PowerManager;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
@@ -25,10 +26,7 @@ import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
-import java.util.ArrayList;
 import java.util.concurrent.Executor;
-
-import io.capawesome.capacitorjs.plugins.foregroundservice.AndroidForegroundService;
 
 public class MainActivity extends BridgeActivity {
     private PowerManager.WakeLock wakeLock;
@@ -60,50 +58,75 @@ public class MainActivity extends BridgeActivity {
             }
         } catch (Exception ignored) {}
 
-        // 3. Native Background Service Auto-Start (Guarantees 24/7 background calls and messages)
-        startNativeForegroundSync();
+        // 3. Native Hardware Back Button Handler (WhatsApp Standard Behavior)
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                handleNativeBackAction();
+            }
+        });
+
+        // 4. Add direct JavaScript Interface for reliable sync UID handshake
+        try {
+            if (bridge != null && bridge.getWebView() != null) {
+                bridge.getWebView().addJavascriptInterface(new Object() {
+                    @android.webkit.JavascriptInterface
+                    public void setSyncUser(String uid) {
+                        if (uid != null && !uid.trim().isEmpty()) {
+                            SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+                            p.edit().putString("sync_uid", uid.trim()).apply();
+                            startSyncService();
+                        }
+                    }
+                    @android.webkit.JavascriptInterface
+                    public void clearSyncUser() {
+                        SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+                        p.edit().remove("sync_uid").apply();
+                    }
+                }, "AndroidSync");
+            }
+        } catch (Exception ignored) {}
+
+        // 5. Start Native Background Sync Service only if user is authenticated
+        SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+        String savedUid = prefs.getString("sync_uid", null);
+        if (savedUid != null && !savedUid.trim().isEmpty()) {
+            startSyncService();
+        }
     }
 
-    public void startNativeForegroundSync() {
-        try {
-            Context context = getApplicationContext();
-            String channelId = "jchatt_sync_channel";
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                NotificationChannel channel = new NotificationChannel(
-                    channelId,
-                    "JChatt Background Service",
-                    NotificationManager.IMPORTANCE_LOW
-                );
-                channel.setDescription("Keeps secure calls and messages connected in background");
-                channel.setShowBadge(false);
-                NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                if (nm != null) {
-                    nm.createNotificationChannel(channel);
+    private void handleNativeBackAction() {
+        if (bridge != null && bridge.getWebView() != null) {
+            bridge.getWebView().evaluateJavascript(
+                "(function() { if (window.handleNativeBack) { return window.handleNativeBack(); } return false; })()",
+                value -> {
+                    if ("false".equals(value) || value == null) {
+                        moveTaskToBack(true);
+                    }
                 }
+            );
+        } else {
+            moveTaskToBack(true);
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        handleNativeBackAction();
+    }
+
+    public void startSyncService() {
+        try {
+            SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+            String uid = prefs.getString("sync_uid", null);
+            if (uid == null || uid.trim().isEmpty()) {
+                return; // Do not start foreground sync without an authenticated user
             }
-
-            Intent serviceIntent = new Intent(context, AndroidForegroundService.class);
-            Bundle notifBundle = new Bundle();
-            notifBundle.putString("title", "JChatt Sovereign Messenger");
-            notifBundle.putString("body", "Connected for secure calls & messages");
-            notifBundle.putInt("id", 7771);
-            notifBundle.putInt("icon", R.drawable.ic_launcher);
-            notifBundle.putBoolean("silent", true);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                notifBundle.putInt("serviceType", ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
-            } else {
-                notifBundle.putInt("serviceType", 0);
-            }
-            notifBundle.putParcelableArrayList("buttons", new ArrayList<Bundle>());
-
-            serviceIntent.putExtra("notification", notifBundle);
-            serviceIntent.putExtra("channelId", channelId);
-
+            Intent serviceIntent = new Intent(this, JChattSyncService.class);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                ContextCompat.startForegroundService(context, serviceIntent);
+                ContextCompat.startForegroundService(this, serviceIntent);
             } else {
-                context.startService(serviceIntent);
+                startService(serviceIntent);
             }
         } catch (Exception ignored) {}
     }
@@ -111,13 +134,12 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onPause() {
         super.onPause();
-        // Keep JavaScript timers and WebSockets alive in background!
         try {
             if (bridge != null && bridge.getWebView() != null) {
                 bridge.getWebView().resumeTimers();
             }
             if (wakeLock != null && !wakeLock.isHeld()) {
-                wakeLock.acquire(30 * 60 * 1000L); // 30 minutes wake lock per background cycle
+                wakeLock.acquire(30 * 60 * 1000L);
             }
         } catch (Exception ignored) {}
     }
@@ -134,6 +156,23 @@ public class MainActivity extends BridgeActivity {
 
     @CapacitorPlugin(name = "BiometricAuth")
     public static class BiometricAuthPlugin extends Plugin {
+        @PluginMethod
+        public void setSyncUser(PluginCall call) {
+            String uid = call.getString("uid");
+            if (uid != null && !uid.trim().isEmpty()) {
+                SharedPreferences prefs = getContext().getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+                prefs.edit().putString("sync_uid", uid.trim()).apply();
+
+                Intent serviceIntent = new Intent(getContext(), JChattSyncService.class);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    ContextCompat.startForegroundService(getContext(), serviceIntent);
+                } else {
+                    getContext().startService(serviceIntent);
+                }
+            }
+            call.resolve();
+        }
+
         @PluginMethod
         public void isAvailable(PluginCall call) {
             try {

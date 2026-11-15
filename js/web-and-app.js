@@ -1535,7 +1535,8 @@
 
   // --- Boot Sequence ---
   function decideInitialRoute() {
-    if (initialRouted || !authResolved || !splashDone) return;
+    if (initialRouted) return;
+    if (!authResolved && !splashDone) return;
     initialRouted = true;
 
     var p = (global.location.pathname || '').toLowerCase();
@@ -1636,7 +1637,6 @@
     try {
       if (global.JCSOUND) {
         if (global.JCSOUND.ensureNotificationChannel) global.JCSOUND.ensureNotificationChannel();
-        if (global.JCSOUND.startForegroundKeepalive) global.JCSOUND.startForegroundKeepalive();
       }
     } catch (e) {}
     try {
@@ -1703,26 +1703,84 @@
       renderRaf = requestAnimationFrame(function () { render(false); });
     });
 
+    splashDone = true;
+    decideInitialRoute();
+
+    // 250ms failsafe watchdog to ensure the screen NEVER gets stuck on loading bar
     setTimeout(function () {
-      splashDone = true;
-      decideInitialRoute();
-    }, 650);
+      if (!initialRouted) {
+        authResolved = true;
+        splashDone = true;
+        decideInitialRoute();
+      }
+    }, 250);
 
     JFE.watchAuth(async function (user) {
       if (user) {
         await JFE.ensureProfile(user.uid).catch(function () {});
+        try {
+          if (global.AndroidSync && global.AndroidSync.setSyncUser) {
+            global.AndroidSync.setSyncUser(user.uid);
+          }
+        } catch (e) {}
       }
       authResolved = true;
-      decideInitialRoute();
+      if (!initialRouted) {
+        decideInitialRoute();
+      } else if (user) {
+        if (LV.route === 'splash' || (LV.route === 'welcome-1' && !LV.draftRestore && (!LV.draftCreate || !LV.draftCreate.handle))) {
+          go('chats', 'tab');
+        }
+      }
     });
   }
+
+  global.handleNativeBack = function () {
+    // 1. If modal/dialog is open -> close it
+    if (LV.wmodal) {
+      LV.wmodal = null;
+      render();
+      return true;
+    }
+    // 2. If photo viewer or attachment drawer is open -> close it
+    if (LV.mediaViewer || LV.attachDrawer) {
+      LV.mediaViewer = null;
+      LV.attachDrawer = false;
+      render();
+      return true;
+    }
+    // 3. If in active chat -> return to inbox (chats list)
+    if (LV.curChatId || LV.route === 'chat' || LV.route === 'chat-group') {
+      LV.curChatId = null;
+      go('chats', 'pop');
+      return true;
+    }
+    // 4. If in history stack and not at root
+    if (LV.hist && LV.hist.length > 0) {
+      var prev = LV.hist.pop();
+      if (prev && prev !== LV.route) {
+        LV.anim = 'pop';
+        LV.route = prev;
+        render();
+        return true;
+      }
+    }
+    // 5. If on any secondary page (settings, calls, updates, secure-device, vault, etc.) -> return to chats
+    if (LV.route && LV.route !== 'chats' && LV.route !== 'landing' && LV.route !== 'splash' && LV.route !== 'welcome' && LV.route !== 'login' && LV.route !== 'auth') {
+      go('chats', 'pop');
+      return true;
+    }
+    // 6. At root screen -> return false (tells Android to minimize smoothly)
+    return false;
+  };
 
   global.JCHATT = {
     go: go,
     toast: toast,
     render: render,
     LV: LV,
-    ACT: ACT
+    ACT: ACT,
+    handleNativeBack: global.handleNativeBack
   };
 
   if (document.readyState === 'loading') {
