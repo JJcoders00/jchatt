@@ -108,6 +108,28 @@ input, textarea { -webkit-user-select: auto !important; user-select: auto !impor
 @keyframes inL { from { opacity: .35; transform: translateX(-28px); } }
 @keyframes fi { from { opacity: 0; transform: translateY(6px); } }
 
+/* Live Voice Soundwave Visualizer Bars */
+.v-wave {
+  width: 4px;
+  height: 100%;
+  background: #00a884;
+  border-radius: 2px;
+  animation: vWaveAnim 0.85s ease-in-out infinite alternate;
+  transform-origin: bottom center;
+}
+.v-w1 { animation-delay: 0.1s; }
+.v-w2 { animation-delay: 0.3s; }
+.v-w3 { animation-delay: 0.5s; }
+.v-w4 { animation-delay: 0.2s; }
+.v-w5 { animation-delay: 0.4s; }
+.v-w6 { animation-delay: 0.6s; }
+.v-w7 { animation-delay: 0.25s; }
+.v-w8 { animation-delay: 0.35s; }
+@keyframes vWaveAnim {
+  0% { transform: scaleY(0.2); }
+  100% { transform: scaleY(1); }
+}
+
 /* ===== CORE COMPONENTS ===== */
 .top { display: flex; align-items: center; gap: 10px; padding: 12px 16px; min-height: 58px; }
 .ttl { flex: 1; min-width: 0; font-weight: 800; font-size: 17px; letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

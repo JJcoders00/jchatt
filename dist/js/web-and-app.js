@@ -574,6 +574,12 @@
         toast('Switching to ' + (found.name || found.handle) + '...');
         var res = await JFE.restoreAccount(found.handle, found.phrase || found.phraseStr);
         if (res.ok) {
+          try {
+            if (window.AndroidSync) {
+              if (window.AndroidSync.setSyncUser) window.AndroidSync.setSyncUser(res.uid);
+              if (window.AndroidSync.setSavedAccount) window.AndroidSync.setSavedAccount(JSON.stringify(found));
+            }
+          } catch (e) {}
           toast('Switched account: ' + (found.name || found.handle));
           go('chats', 'tab');
         } else {
@@ -924,7 +930,12 @@
       clearInterval(voiceTimer);
       voiceTimer = setInterval(function () {
         LV.voiceSeconds++;
-        render();
+        var el = document.getElementById('voice-timer-display');
+        if (el) {
+          var m = Math.floor(LV.voiceSeconds / 60);
+          var sc = LV.voiceSeconds % 60;
+          el.textContent = (m < 10 ? '0' : '') + m + ':' + (sc < 10 ? '0' : '') + sc;
+        }
       }, 1000);
       render();
     },

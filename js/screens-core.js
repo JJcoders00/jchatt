@@ -962,14 +962,21 @@
     },
 
     'voice-record': function () {
-      return SCREENS['chat']() + sheet('Voice message',
-        '<div style="display:grid;place-items:center;gap:12px;padding:12px 0">'
-        + ico('mic', LV.voiceRecording ? 'org' : 'lime', 28)
-        + '<div style="font-size:28px;font-weight:800">' + fmtDur(LV.voiceSeconds) + '</div>'
-        + '<p style="font-size:12px;color:var(--mute)">' + (LV.voiceRecording ? 'Recording encrypted audio...' : 'Tap Start to record a real voice note.') + '</p>'
+      return SCREENS['chat']() + sheet('Voice Note',
+        '<div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px 0;text-align:center">'
+        + '<div style="position:relative;width:68px;height:68px;border-radius:34px;background:rgba(0,168,132,0.14);border:2px solid #00a884;display:flex;align-items:center;justify-content:center;' + (LV.voiceRecording ? 'box-shadow:0 0 24px rgba(0,168,132,0.45);animation:pulse 1.4s infinite ease-in-out;' : '') + '">'
+        + ico('mic', LV.voiceRecording ? 'org' : 'lime', 30)
+        + '</div>'
+        + '<div id="voice-timer-display" style="font-size:32px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:1px">' + fmtDur(LV.voiceSeconds) + '</div>'
         + (LV.voiceRecording
-          ? btn(I('send', 17) + ' Stop & Send Voice Note', '', 'data-act="voicestopsend"')
-          : btn(I('mic', 17) + ' Start Recording', 'ink', 'data-act="voicestart"'))
+          ? '<div style="display:flex;align-items:center;gap:4px;height:24px;margin:2px 0">'
+            + '<span class="v-wave v-w1"></span><span class="v-wave v-w2"></span><span class="v-wave v-w3"></span><span class="v-wave v-w4"></span>'
+            + '<span class="v-wave v-w5"></span><span class="v-wave v-w6"></span><span class="v-wave v-w7"></span><span class="v-wave v-w8"></span>'
+            + '</div>'
+            + '<p style="font-size:12px;color:#00a884;font-weight:600;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:4px;background:#e53935;animation:pulse 1s infinite"></span> Encrypted Voice Recording...</p>'
+            + btn(I('send', 17) + ' Stop & Send Voice Note', '', 'data-act="voicestopsend"')
+          : '<p style="font-size:12px;color:var(--mute)">Tap below to start recording high-fidelity encrypted voice note</p>'
+            + btn(I('mic', 17) + ' Start Recording', 'ink', 'data-act="voicestart"'))
         + '</div>', 'chat');
     },
 

@@ -35,6 +35,8 @@
       },
       "calls": {
         "$uid": {
+          ".read": "auth != null && auth.uid == $uid",
+          ".write": "auth != null",
           ".indexOn": ["ts"]
         }
       },
