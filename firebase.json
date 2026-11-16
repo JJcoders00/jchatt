@@ -10,7 +10,27 @@
     ],
     "rewrites": [
       {
-        "source": "!**/*.@(png|jpg|jpeg|gif|svg|webp|ico|mp3|wav|json|js|css)",
+        "source": "/web",
+        "destination": "/web.html"
+      },
+      {
+        "source": "/web/**",
+        "destination": "/web.html"
+      },
+      {
+        "source": "/privacy",
+        "destination": "/privacy.html"
+      },
+      {
+        "source": "/terms",
+        "destination": "/terms.html"
+      },
+      {
+        "source": "/whitepaper",
+        "destination": "/whitepaper.html"
+      },
+      {
+        "source": "**",
         "destination": "/index.html"
       }
     ]

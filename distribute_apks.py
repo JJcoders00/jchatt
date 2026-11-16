@@ -15,7 +15,10 @@ targets = [
     r"app-debug.apk",
     r"Jchatt.apk",
     r"dist/app-debug.apk",
-    r"dist/Jchatt.apk"
+    r"dist/Jchatt.apk",
+    r"downloads/jchatt-v2.0.apk",
+    r"jchatt_web_v2/dist/downloads/jchatt-v2.0.apk",
+    r"dist/downloads/jchatt-v2.0.apk"
 ]
 
 for t in targets:

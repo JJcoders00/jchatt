@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Terms of Service · JChatt</title>
+<meta name="description" content="Official Terms of Service for JChatt. Sovereign communications agreement, key custody rules, and zero-telemetry protocols.">
+<meta name="theme-color" content="#0a2230">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./images/logo/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0a2230;--ink-2:#123140;--ink-3:#06151e;
+  --lime:#82d82f;--lime-d:#4f9a12;--lime-l:#e2f5cb;
+  --orange:#ff6a2b;--sky-l:#e3f3fa;--sky-2:#7cc4e4;
+  --teal:#2d9d86;--paper:#f3f5f5;--white:#fff;--text:#10222b;--mute:#5d717a;--rim:#e3eaec;--rim-d:#cfd9dc;
+  --wrap:1100px;--gut:24px;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font:500 17px/1.65 Nunito,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);background:var(--paper)}
+h1,h2,h3,h4{font-family:Sora,Nunito,sans-serif;letter-spacing:-.03em;color:var(--ink);margin:0}
+h1{font-size:clamp(32px,4vw,48px);font-weight:800;line-height:1.15}
+h2{font-size:24px;font-weight:800;margin-top:36px;margin-bottom:12px;border-bottom:2px solid var(--rim);padding-bottom:8px}
+h3{font-size:19px;font-weight:700;margin-top:20px;margin-bottom:8px}
+p{margin:0 0 16px}
+a{color:var(--teal);text-decoration:none;font-weight:700}
+a:hover{text-decoration:underline}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--gut)}
+.nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--rim);padding:14px 0}
+.nav-inner{display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px;font:800 22px/1 Sora,sans-serif;color:var(--ink);text-decoration:none}
+.brand img{width:34px;height:34px;border-radius:10px}
+.nav-links{display:flex;align-items:center;gap:18px;font-weight:800;font-size:15px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:12px;font:900 14px/1 Nunito,sans-serif;text-transform:uppercase;background:var(--lime);color:var(--ink);border:0;box-shadow:0 3px 0 var(--lime-d);cursor:pointer;text-decoration:none}
+.btn:hover{filter:brightness(1.05);text-decoration:none}
+.hero-legal{background:linear-gradient(180deg,#6fbfe3 0%,#cfeaf5 100%);padding:60px 0 40px;border-bottom:1px solid var(--rim)}
+.badge{display:inline-flex;align-items:center;gap:6px;background:var(--ink);color:var(--lime);font:800 12px/1 Nunito,sans-serif;text-transform:uppercase;letter-spacing:.08em;padding:6px 12px;border-radius:999px;margin-bottom:16px}
+.content-box{background:#fff;border:2px solid var(--rim);border-radius:24px;padding:48px;margin:40px auto 80px;box-shadow:0 12px 30px rgba(10,34,48,.06)}
+.callout{background:#ffe3d3;border-left:5px solid var(--orange);padding:18px 20px;border-radius:0 14px 14px 0;margin:24px 0;color:#541c04;font-size:15.5px}
+.callout b{display:block;margin-bottom:4px;font-size:16px}
+ul{margin:0 0 16px;padding-left:22px}
+li{margin-bottom:8px}
+footer{background:var(--ink);color:#fff;padding:40px 0 30px;font-size:14px;color:rgba(255,255,255,.65)}
+footer a{color:var(--lime)}
+@media(max-width:768px){.content-box{padding:24px}.nav-links a:not(.btn){display:none}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="./"><img src="./images/logo/icon.png" alt="JChatt Logo">jchatt</a>
+    <div class="nav-links">
+      <a href="./#features">Features</a>
+      <a href="./#security">Security</a>
+      <a href="./privacy.html">Privacy</a>
+      <a href="./whitepaper.html">Whitepaper</a>
+      <a class="btn" href="./web.html">Launch Web</a>
+    </div>
+  </div>
+</header>
+
+<section class="hero-legal">
+  <div class="wrap">
+    <span class="badge">Legal Agreement</span>
+    <h1>Terms of Service</h1>
+    <p style="font-size:18px;color:var(--ink-2);max-width:680px;font-weight:700;margin-top:10px">
+      The rules of engagement for using JChatt. Self-custody of cryptographic keys, zero telemetry, and mutual civil responsibility.
+    </p>
+    <p style="font-size:13px;color:var(--mute);font-weight:700">Last Revised: November 16, 2026 · Version 2.4.0</p>
+  </div>
+</section>
+
+<main class="wrap">
+  <article class="content-box">
+    <div class="callout">
+      <b>Critical Notice: Non-Custodial Key Architecture</b>
+      By accessing or using JChatt, you acknowledge that JChatt is a non-custodial communication protocol. We do not maintain user databases of passwords, phone numbers, or recovery keys. If you lose your 12-word seed phrase, your account and encrypted history are permanently unrecoverable by anyone, including the JChatt engineering team.
+    </div>
+
+    <h2>1. Acceptance of Terms</h2>
+    <p>
+      By launching JChatt Web, downloading the Android APK, or utilizing any JChatt APIs or services, you agree to be bound by these Terms of Service. If you do not agree to these terms, do not install or use the software.
+    </p>
+
+    <h2>2. Eligibility & Account Creation</h2>
+    <ul>
+      <li>You do not need a telephone number, SIM card, or personal email address to create a JChatt identity.</li>
+      <li>Your account is represented by a 12-word recovery phrase generated on your device using client-side cryptographic entropy.</li>
+      <li>You must be of legal age under your applicable local laws to consent to decentralized software usage.</li>
+    </ul>
+
+    <h2>3. User Responsibility & Key Custody</h2>
+    <p>
+      You retain 100% ownership and 100% responsibility for your private cryptographic credentials:
+    </p>
+    <ul>
+      <li><strong>Physical Seed Backup</strong>: You must write down your 12-word seed phrase on paper and store it securely. Never enter your phrase into untrusted third-party websites or cloud note services.</li>
+      <li><strong>No "Forgot Password" Mechanism</strong>: JChatt maintains no central identity authority. There is no password reset mechanism, account recovery desk, or administrative backdoor.</li>
+      <li><strong>Device Security</strong>: You are solely responsible for securing your physical device against unauthorized access, malware, or screen recorders.</li>
+    </ul>
+
+    <h2>4. Acceptable Use & Prohibited Conduct</h2>
+    <p>
+      JChatt is created to uphold civil privacy, human rights, and private enterprise communications. You agree that you will NOT use JChatt to:
+    </p>
+    <ul>
+      <li>Engage in illegal child sexual exploitation and abuse (CSAE) material distribution.</li>
+      <li>Facilitate imminent violent terrorism or violent physical harm against persons.</li>
+      <li>Conduct automated denial-of-service (DoS) or signaling queue flooding attacks against JChatt relay servers.</li>
+      <li>Distribute malicious self-executing software, ransomware, or spyware.</li>
+    </ul>
+
+    <h2>5. Disclaimer of Warranties</h2>
+    <p>
+      JChatt software is provided <strong>"AS IS"</strong> and <strong>"AS AVAILABLE"</strong>, without warranties of any kind, either express or implied, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, uptime, or non-infringement. While our protocols employ peer-reviewed cryptographic primitives (AES-256-GCM, WebRTC DTLS-SRTP), we do not warrant that the software will be uninterrupted, error-free, or immune to physical device tampering.
+    </p>
+
+    <h2>6. Limitation of Liability</h2>
+    <p>
+      To the maximum extent permitted by applicable law, JChatt contributors, developers, and affiliated maintainers shall not be liable for any direct, indirect, incidental, special, consequential, or punitive damages resulting from:
+    </p>
+    <ul>
+      <li>Your loss of your 12-word recovery phrase or PIN codes.</li>
+      <li>Unauthorized interception resulting from physical compromise or compromised operating systems.</li>
+      <li>Network interruptions, carrier port blocks, or latency in peer-to-peer WebRTC connections.</li>
+    </ul>
+
+    <h2>7. Modifications to the Protocol</h2>
+    <p>
+      We reserve the right to improve, modify, or update the JChatt codebase and protocol specifications. Upgraded versions will be distributed via GitHub and the official website. Continued use of the software constitutes acceptance of any revised terms.
+    </p>
+
+    <h2>8. Governing Law & Dispute Resolution</h2>
+    <p>
+      These Terms are governed by general principles of international contract law and the open-source software legal framework. If you have questions regarding these terms, contact <code>legal@jjcoders.org</code>.
+    </p>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px">
+    <div>© 2026 JChatt. Sovereign, zero-telemetry messaging.</div>
+    <div>
+      <a href="./">Home</a> ·
+      <a href="./web.html">Web App</a> ·
+      <a href="./privacy.html">Privacy Policy</a> ·
+      <a href="./whitepaper.html">Whitepaper</a> ·
+      <a href="./#download">Download APK</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
