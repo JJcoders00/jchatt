@@ -6,6 +6,7 @@ def sync_assets():
         'web.html',
         'privacy.html',
         'terms.html',
+        'compliance.html',
         'whitepaper.html',
         'favicon.svg',
         'favicon.png',

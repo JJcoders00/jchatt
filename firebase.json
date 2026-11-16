@@ -26,6 +26,10 @@
         "destination": "/terms.html"
       },
       {
+        "source": "/compliance",
+        "destination": "/compliance.html"
+      },
+      {
         "source": "/whitepaper",
         "destination": "/whitepaper.html"
       },
