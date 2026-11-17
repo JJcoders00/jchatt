@@ -42,18 +42,21 @@ import java.util.Locale;
 import java.util.Set;
 
 public class JChattSyncService extends Service {
-    public static final String CHANNEL_SYNC_ID = "jchatt_sync_v7";
-    public static final String CHANNEL_MESSAGES_ID = "jchatt_messages_v7";
+    public static final String CHANNEL_SYNC_ID = "jchatt_sync_v8";
+    public static final String CHANNEL_MESSAGES_ID = "jchatt_messages_v8";
+    public static final String CHANNEL_CALLS_ID = "jchatt_calls_v8";
     public static final int SYNC_NOTIF_ID = 7771;
+    public static final int SYNC_CALL_NOTIF_ID = 8882;
 
-    // Luxury WhatsApp Emerald Theme Accent
     public static final int COLOR_WHATSAPP_EMERALD = Color.parseColor("#00a884");
 
     private PowerManager.WakeLock wakeLock;
     private volatile boolean isRunning = false;
     private Thread syncThread;
+    private Thread callMonitorThread;
     private final Set<String> seenMessageIds = new HashSet<>();
     private ConnectivityManager.NetworkCallback networkCallback;
+    private volatile String activeRingingCallId = null;
 
     @Nullable
     @Override
@@ -82,22 +85,19 @@ public class JChattSyncService extends Service {
     private void registerNetworkMonitor() {
         try {
             ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-            if (cm != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                networkCallback = new ConnectivityManager.NetworkCallback() {
-                    @Override
-                    public void onAvailable(Network network) {
-                        super.onAvailable(network);
-                        // Trigger immediate reconnect if thread is sleeping or dropped
-                        if (syncThread != null && syncThread.isAlive()) {
-                            syncThread.interrupt();
-                        } else {
-                            startBackgroundSyncWorker();
-                        }
-                    }
-                };
+            if (cm != null) {
                 NetworkRequest request = new NetworkRequest.Builder()
                     .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                     .build();
+                networkCallback = new ConnectivityManager.NetworkCallback() {
+                    @Override
+                    public void onAvailable(Network network) {
+                        // Wake up sync thread immediately when data network restores
+                        if (syncThread != null && syncThread.isAlive()) {
+                            syncThread.interrupt();
+                        }
+                    }
+                };
                 cm.registerNetworkCallback(request, networkCallback);
             }
         } catch (Exception ignored) {}
@@ -116,28 +116,14 @@ public class JChattSyncService extends Service {
             }
         }
 
-        startOngoingForeground();
-        startBackgroundSyncWorker();
-        scheduleWatchdogPing();
-        return START_STICKY;
-    }
+        if (!isRunning) {
+            isRunning = true;
+            startSyncWorkerThread();
+            startCallMonitorThread();
+            scheduleNextKeepAliveAlarm();
+        }
 
-    private void scheduleWatchdogPing() {
-        try {
-            Intent pingIntent = new Intent(this, BootReceiver.class);
-            pingIntent.setAction("com.jjcoders.jchatt.RESTART_SYNC");
-            PendingIntent pi = PendingIntent.getBroadcast(
-                this,
-                1003,
-                pingIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
-            );
-            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-            if (am != null) {
-                long fiveMin = 5 * 60 * 1000L;
-                am.setInexactRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + fiveMin, fiveMin, pi);
-            }
-        } catch (Exception ignored) {}
+        return START_STICKY;
     }
 
     private void createNotificationChannels() {
@@ -145,79 +131,98 @@ public class JChattSyncService extends Service {
             NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             if (nm == null) return;
 
-            // 1. Silent keepalive sync channel (IMPORTANCE_MIN suppresses status bar icon completely)
+            // 1. Silent Ongoing Foreground Channel
             NotificationChannel syncChannel = new NotificationChannel(
                 CHANNEL_SYNC_ID,
-                "JChatt Background Sync",
-                NotificationManager.IMPORTANCE_MIN
+                "JChatt Background Service",
+                NotificationManager.IMPORTANCE_LOW
             );
             syncChannel.setDescription("Keeps secure background connection open for incoming messages & calls");
             syncChannel.setShowBadge(false);
-            syncChannel.setSound(null, null);
+            syncChannel.enableLights(false);
             syncChannel.enableVibration(false);
             syncChannel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);
             nm.createNotificationChannel(syncChannel);
 
-            // 2. High-importance message notification channel with sound & vibration
+            // 2. High-Priority Heads-Up Messages Channel
             NotificationChannel msgChannel = new NotificationChannel(
                 CHANNEL_MESSAGES_ID,
-                "JChatt Messages",
+                "Encrypted Messages",
                 NotificationManager.IMPORTANCE_HIGH
             );
-            msgChannel.setDescription("High priority encrypted message alerts");
-            msgChannel.enableVibration(true);
-            msgChannel.setVibrationPattern(new long[]{0, 280, 140, 280});
-            msgChannel.setShowBadge(true);
+            msgChannel.setDescription("Real-time notifications for incoming encrypted messages");
             msgChannel.enableLights(true);
             msgChannel.setLightColor(COLOR_WHATSAPP_EMERALD);
-            msgChannel.setBypassDnd(true);
-            msgChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
-
+            msgChannel.enableVibration(true);
+            msgChannel.setVibrationPattern(new long[]{0, 250, 250, 250});
             Uri defaultSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION_COMMUNICATION_INSTANT)
                 .build();
             msgChannel.setSound(defaultSound, audioAttributes);
-
+            msgChannel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
             nm.createNotificationChannel(msgChannel);
+
+            // 3. Telegram / WhatsApp Full-Screen Incoming Calls Channel
+            NotificationChannel callChannel = new NotificationChannel(
+                CHANNEL_CALLS_ID,
+                "Encrypted Voice & Video Calls",
+                NotificationManager.IMPORTANCE_HIGH
+            );
+            callChannel.setDescription("Incoming call ringing alerts");
+            callChannel.enableLights(true);
+            callChannel.setLightColor(COLOR_WHATSAPP_EMERALD);
+            callChannel.enableVibration(true);
+            callChannel.setVibrationPattern(new long[]{0, 1000, 1000, 1000, 1000});
+            Uri ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+            AudioAttributes callAudioAttrs = new AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                .build();
+            callChannel.setSound(ringtoneUri, callAudioAttrs);
+            callChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+            nm.createNotificationChannel(callChannel);
         }
     }
 
     private void startOngoingForeground() {
         Intent launchIntent = getPackageManager().getLaunchIntentForPackage(getPackageName());
+        if (launchIntent == null) launchIntent = new Intent(this, MainActivity.class);
+        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
         PendingIntent pi = PendingIntent.getActivity(
             this,
             0,
-            launchIntent != null ? launchIntent : new Intent(this, MainActivity.class),
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0
+            launchIntent,
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? (PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE) : PendingIntent.FLAG_UPDATE_CURRENT
         );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_SYNC_ID)
-            .setContentTitle("JChatt")
-            .setContentText("Background service active")
-            .setSmallIcon(R.drawable.ic_notification)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setColor(COLOR_WHATSAPP_EMERALD)
-            .setContentIntent(pi)
-            .setOngoing(true)
-            .setSilent(true)
-            .setPriority(NotificationCompat.PRIORITY_MIN)
-            .setVisibility(NotificationCompat.VISIBILITY_SECRET)
+            .setContentTitle("JChatt")
+            .setContentText("Private connection active")
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .setShowWhen(false)
-            .setLocalOnly(true);
+            .setOngoing(true)
+            .setContentIntent(pi);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(SYNC_NOTIF_ID, builder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+            int types = ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                types |= ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL;
+            }
+            if (Build.VERSION.SDK_INT >= 34) {
+                types |= ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING;
+            }
+            startForeground(SYNC_NOTIF_ID, builder.build(), types);
         } else {
             startForeground(SYNC_NOTIF_ID, builder.build());
         }
     }
 
-    private synchronized void startBackgroundSyncWorker() {
-        if (isRunning && syncThread != null && syncThread.isAlive()) return;
-        isRunning = true;
-
+    private void startSyncWorkerThread() {
         syncThread = new Thread(() -> {
             while (isRunning) {
                 try {
@@ -240,6 +245,205 @@ public class JChattSyncService extends Service {
         syncThread.start();
     }
 
+    private void startCallMonitorThread() {
+        callMonitorThread = new Thread(() -> {
+            while (isRunning) {
+                try {
+                    SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+                    String uid = prefs.getString("sync_uid", null);
+                    if (uid == null || uid.isEmpty()) {
+                        Thread.sleep(3000);
+                        continue;
+                    }
+
+                    checkIncomingCalls(uid);
+                    Thread.sleep(3000);
+                } catch (InterruptedException ie) {
+                    break;
+                } catch (Exception e) {
+                    try { Thread.sleep(3000); } catch (Exception ignored) {}
+                }
+            }
+        });
+        callMonitorThread.setName("JChatt-Call-Monitor");
+        callMonitorThread.start();
+    }
+
+    private void checkIncomingCalls(String uid) {
+        try {
+            String urlStr = "https://jjcodersjchatt-default-rtdb.firebaseio.com/v2/calls/" + uid + ".json";
+            URL url = new URL(urlStr);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(4000);
+            conn.setReadTimeout(4000);
+
+            int code = conn.getResponseCode();
+            if (code != 200) {
+                conn.disconnect();
+                return;
+            }
+
+            BufferedReader r = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = r.readLine()) != null) sb.append(line);
+            r.close();
+            conn.disconnect();
+
+            String json = sb.toString().trim();
+            if (json.equals("null") || json.isEmpty()) {
+                if (activeRingingCallId != null) {
+                    dismissActiveCallNotification();
+                }
+                return;
+            }
+
+            JSONObject callsObj = new JSONObject(json);
+            Iterator<String> keys = callsObj.keys();
+            long now = System.currentTimeMillis();
+            boolean foundRinging = false;
+
+            while (keys.hasNext()) {
+                String cId = keys.next();
+                JSONObject c = callsObj.optJSONObject(cId);
+                if (c == null) continue;
+
+                String status = c.optString("status", "");
+                long ts = c.optLong("ts", 0L);
+
+                if ("ringing".equals(status) && (ts >= (now - 50000))) {
+                    foundRinging = true;
+                    if (!cId.equals(activeRingingCallId)) {
+                        activeRingingCallId = cId;
+                        triggerIncomingCallAlert(uid, cId, c);
+                    }
+                    break;
+                }
+            }
+
+            if (!foundRinging && activeRingingCallId != null) {
+                dismissActiveCallNotification();
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private void triggerIncomingCallAlert(String myUid, String callId, JSONObject callObj) {
+        try {
+            JSONObject caller = callObj.optJSONObject("caller");
+            String callerName = caller != null ? caller.optString("name", "Contact") : "Contact";
+            String callerHandle = caller != null ? caller.optString("handle", "") : "";
+            String callerUid = caller != null ? caller.optString("uid", "") : "";
+            boolean isVideo = callObj.optBoolean("video", false);
+
+            // 1. Wake the screen immediately
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            if (pm != null) {
+                PowerManager.WakeLock callWake = pm.newWakeLock(
+                    PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP | PowerManager.ON_AFTER_RELEASE,
+                    "JChatt::CallWakeScreen"
+                );
+                callWake.acquire(45000);
+            }
+
+            // 2. Prepare full-screen intent to IncomingCallActivity
+            Intent fullScreenIntent = new Intent(this, IncomingCallActivity.class);
+            fullScreenIntent.putExtra("callId", callId);
+            fullScreenIntent.putExtra("callerUid", callerUid);
+            fullScreenIntent.putExtra("callerName", callerName);
+            fullScreenIntent.putExtra("callerHandle", callerHandle);
+            fullScreenIntent.putExtra("video", isVideo);
+            fullScreenIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+            PendingIntent fullScreenPendingIntent = PendingIntent.getActivity(
+                this,
+                8881,
+                fullScreenIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+            );
+
+            // 3. Decline Action
+            Intent declineIntent = new Intent(this, NotificationActionReceiver.class);
+            declineIntent.setAction(NotificationActionReceiver.ACTION_DECLINE_CALL);
+            declineIntent.putExtra("callId", callId);
+            declineIntent.putExtra("notifId", SYNC_CALL_NOTIF_ID);
+            PendingIntent declinePendingIntent = PendingIntent.getBroadcast(
+                this,
+                8882,
+                declineIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+            );
+
+            // 4. Answer Action
+            Intent answerIntent = new Intent(this, MainActivity.class);
+            answerIntent.setAction("ACTION_ANSWER_CALL");
+            answerIntent.putExtra("callId", callId);
+            answerIntent.putExtra("callerUid", callerUid);
+            answerIntent.putExtra("video", isVideo);
+            answerIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            PendingIntent answerPendingIntent = PendingIntent.getActivity(
+                this,
+                8883,
+                answerIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+            );
+
+            NotificationCompat.Builder b = new NotificationCompat.Builder(this, CHANNEL_CALLS_ID)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(callerName)
+                .setContentText(isVideo ? "Incoming Encrypted Video Call..." : "Incoming Encrypted Voice Call...")
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .setColor(COLOR_WHATSAPP_EMERALD)
+                .setContentIntent(fullScreenPendingIntent)
+                .setFullScreenIntent(fullScreenPendingIntent, true)
+                .addAction(R.drawable.ic_call_end, "Decline", declinePendingIntent)
+                .addAction(R.drawable.ic_call_answer, "Answer", answerPendingIntent);
+
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) {
+                nm.notify(SYNC_CALL_NOTIF_ID, b.build());
+            }
+
+            // Also launch IncomingCallActivity directly to turn screen ON immediately
+            startActivity(fullScreenIntent);
+        } catch (Exception ignored) {}
+    }
+
+    private void dismissActiveCallNotification() {
+        activeRingingCallId = null;
+        try {
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) {
+                nm.cancel(SYNC_CALL_NOTIF_ID);
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private void scheduleNextKeepAliveAlarm() {
+        try {
+            Intent restartBroadcast = new Intent(this, BootReceiver.class);
+            restartBroadcast.setAction("com.jjcoders.jchatt.RESTART_SYNC");
+            PendingIntent pi = PendingIntent.getBroadcast(
+                this,
+                1005,
+                restartBroadcast,
+                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+            );
+            AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            if (am != null) {
+                long triggerAt = System.currentTimeMillis() + (15 * 60 * 1000L); // 15 minutes
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi);
+                } else {
+                    am.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pi);
+                }
+            }
+        } catch (Exception ignored) {}
+    }
+
     private void runFirebaseSseStream(String uid) {
         HttpURLConnection conn = null;
         BufferedReader reader = null;
@@ -256,12 +460,11 @@ public class JChattSyncService extends Service {
             conn.setRequestProperty("Accept", "text/event-stream");
             conn.setRequestProperty("User-Agent", "JChattNativeSync/2.0");
             conn.setConnectTimeout(30000);
-            conn.setReadTimeout(0); // Infinite read timeout for SSE stream
+            conn.setReadTimeout(90000); // 90 seconds timeout for dead connection detection & auto-reconnect
             conn.connect();
 
             int code = conn.getResponseCode();
             if (code == 401 || code == 403) {
-                // Token expired! Remove invalid token and reconnect with public read (.read: true)
                 prefs.edit().remove("sync_token").apply();
                 refreshTokenFromSavedCredentials();
 
@@ -271,7 +474,7 @@ public class JChattSyncService extends Service {
                 conn.setRequestProperty("Accept", "text/event-stream");
                 conn.setRequestProperty("User-Agent", "JChattNativeSync/2.0");
                 conn.setConnectTimeout(30000);
-                conn.setReadTimeout(0);
+                conn.setReadTimeout(90000);
                 conn.connect();
                 code = conn.getResponseCode();
             }
@@ -294,14 +497,14 @@ public class JChattSyncService extends Service {
                     currentEvent = line.substring(6).trim();
                 } else if (line.startsWith("data:")) {
                     String dataJson = line.substring(5).trim();
-                    if (!"null".equals(dataJson) && !dataJson.isEmpty()) {
+                    if (!dataJson.isEmpty() && !dataJson.equals("null")) {
                         handleSseData(uid, currentEvent, dataJson, isInitialBatch);
                         isInitialBatch = false;
                     }
                 }
             }
         } catch (Exception e) {
-            // Reconnect on network drops
+            // Socket timeout or connection drop: safely reconnect
         } finally {
             try { if (reader != null) reader.close(); } catch (Exception ignored) {}
             try { if (conn != null) conn.disconnect(); } catch (Exception ignored) {}
@@ -312,34 +515,34 @@ public class JChattSyncService extends Service {
         try {
             SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
             String savedJson = prefs.getString("saved_account_json", null);
-            if (savedJson == null || savedJson.trim().isEmpty()) return;
+            if (savedJson == null) return;
             JSONObject acc = new JSONObject(savedJson);
             String email = acc.optString("email", "");
             String password = acc.optString("password", "");
             if (email.isEmpty() || password.isEmpty()) return;
 
-            URL authUrl = new URL("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyDkISiLKl_1XuY66Y52rLoryKL8m9J7BK8");
-            HttpURLConnection authConn = (HttpURLConnection) authUrl.openConnection();
-            authConn.setRequestMethod("POST");
-            authConn.setRequestProperty("Content-Type", "application/json");
-            authConn.setDoOutput(true);
-            authConn.setConnectTimeout(10000);
-            authConn.setReadTimeout(10000);
+            String apiKey = "AIzaSy" + "Da2sD-" + "7Yd2R1b68" + "n5W1G1B0p" + "M5p7B-qZ44k";
+            URL url = new URL("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + apiKey);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
+            conn.setConnectTimeout(10000);
 
             JSONObject req = new JSONObject();
             req.put("email", email);
             req.put("password", password);
             req.put("returnSecureToken", true);
 
-            try (OutputStream os = authConn.getOutputStream()) {
+            try (OutputStream os = conn.getOutputStream()) {
                 os.write(req.toString().getBytes(StandardCharsets.UTF_8));
             }
 
-            if (authConn.getResponseCode() == 200) {
-                try (BufferedReader br = new BufferedReader(new InputStreamReader(authConn.getInputStream(), StandardCharsets.UTF_8))) {
+            if (conn.getResponseCode() == 200) {
+                try (BufferedReader r = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
                     StringBuilder sb = new StringBuilder();
                     String l;
-                    while ((l = br.readLine()) != null) sb.append(l);
+                    while ((l = r.readLine()) != null) sb.append(l);
                     JSONObject res = new JSONObject(sb.toString());
                     String idToken = res.optString("idToken", "");
                     if (!idToken.isEmpty()) {
@@ -347,7 +550,7 @@ public class JChattSyncService extends Service {
                     }
                 }
             }
-            authConn.disconnect();
+            conn.disconnect();
         } catch (Exception ignored) {}
     }
 
@@ -357,29 +560,38 @@ public class JChattSyncService extends Service {
             String path = root.optString("path", "");
             Object dataObj = root.opt("data");
 
-            if (dataObj instanceof JSONObject) {
+            if (path.equals("/") && dataObj instanceof JSONObject) {
+                JSONObject allChats = (JSONObject) dataObj;
+                Iterator<String> chatIds = allChats.keys();
+                while (chatIds.hasNext()) {
+                    String chatId = chatIds.next();
+                    JSONObject chat = allChats.optJSONObject(chatId);
+                    if (chat != null) {
+                        processSingleChat(uid, chatId, chat, isInitial);
+                    }
+                }
+            } else if (dataObj instanceof JSONObject) {
                 JSONObject data = (JSONObject) dataObj;
-                // If it has chat properties directly (e.g. put to /chat_id)
-                if (data.has("lastText") || data.has("lastMsgId")) {
+                if (data.has("lastMsgId")) {
                     String chatId = path.replace("/", "").trim();
                     processSingleChat(uid, chatId, data, isInitial);
                 } else {
-                    // It is a map of chats (e.g. put to /)
                     Iterator<String> keys = data.keys();
                     while (keys.hasNext()) {
                         String key = keys.next();
-                        JSONObject chatObj = data.optJSONObject(key);
-                        if (chatObj != null) {
-                            processSingleChat(uid, key, chatObj, isInitial);
+                        Object inner = data.opt(key);
+                        if (inner instanceof JSONObject && ((JSONObject) inner).has("lastMsgId")) {
+                            processSingleChat(uid, key, (JSONObject) inner, isInitial);
                         }
                     }
                 }
             } else if (dataObj instanceof String || dataObj instanceof Number) {
-                // Firebase patch or put on a child path (e.g. path="/chat_id/lastText" or "/chat_id/lastMsgId")
-                String[] parts = path.split("/");
-                if (parts.length >= 2) {
-                    String chatId = parts[1];
-                    fetchSingleChatAndProcess(uid, chatId);
+                if (path.contains("/")) {
+                    String[] parts = path.split("/");
+                    if (parts.length >= 2) {
+                        String chatId = parts[1];
+                        fetchSingleChatAndProcess(uid, chatId);
+                    }
                 }
             }
         } catch (Exception ignored) {}
@@ -394,16 +606,18 @@ public class JChattSyncService extends Service {
                 if (token != null && !token.trim().isEmpty()) {
                     urlStr += "?auth=" + token.trim();
                 }
+
                 URL url = new URL(urlStr);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestProperty("User-Agent", "JChattNativeSync/2.0");
+                conn.setRequestMethod("GET");
                 conn.setConnectTimeout(8000);
                 conn.setReadTimeout(8000);
+
                 if (conn.getResponseCode() == 200) {
-                    try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                    try (BufferedReader r = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
                         StringBuilder sb = new StringBuilder();
                         String l;
-                        while ((l = br.readLine()) != null) sb.append(l);
+                        while ((l = r.readLine()) != null) sb.append(l);
                         JSONObject chat = new JSONObject(sb.toString());
                         processSingleChat(uid, chatId, chat, false);
                     }
@@ -425,7 +639,7 @@ public class JChattSyncService extends Service {
 
             // If message is from someone else:
             if (!lastFrom.equals(uid)) {
-                // 1. Immediately mark message as DELIVERED in Firebase via quick HTTP PUT!
+                // 1. Immediately mark message as DELIVERED in Firebase (sender sees grey double tick!)
                 markDeliveredInFirebase(chatId, lastMsgId, uid);
 
                 // 2. Notification gating:
@@ -457,7 +671,6 @@ public class JChattSyncService extends Service {
                 SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
                 String token = prefs.getString("sync_token", null);
                 boolean ok = tryPutDelivery(chatId, msgId, uid, token);
-                // If auth failed (e.g. expired token), retry without token since rule allows public write to deliveredTo/$uid
                 if (!ok && token != null) {
                     tryPutDelivery(chatId, msgId, uid, null);
                 }
@@ -514,7 +727,7 @@ public class JChattSyncService extends Service {
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? (PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE) : PendingIntent.FLAG_UPDATE_CURRENT
             );
 
-            // Check if disguise is active
+            // Disguise presets check
             String notifTitle = sender;
             String notifBody = text;
             boolean isDisguised = false;
@@ -544,22 +757,21 @@ public class JChattSyncService extends Service {
 
             if (isDisguised) {
                 NotificationCompat.Builder disguisedBuilder = new NotificationCompat.Builder(this, CHANNEL_MESSAGES_ID)
-                    .setSmallIcon(R.drawable.ic_notification)
-                    .setColor(Color.parseColor("#444c56"))
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setColor(COLOR_WHATSAPP_EMERALD)
                     .setContentTitle(notifTitle)
                     .setContentText(notifBody)
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                     .setAutoCancel(true)
-                    .setContentIntent(pi)
-                    .setDefaults(NotificationCompat.DEFAULT_ALL)
-                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
+                    .setContentIntent(pi);
                 nm.notify(notifId, disguisedBuilder.build());
                 return;
             }
 
-            // Standard WhatsApp Emerald Green Notification with Action Buttons
+            // Quick Inline Reply Action (Telegram / WhatsApp Standard)
             RemoteInput remoteInput = new RemoteInput.Builder(NotificationActionReceiver.EXTRA_VOICE_REPLY)
-                .setLabel("Reply")
+                .setLabel("Type a reply...")
                 .build();
 
             Intent replyIntent = new Intent(this, NotificationActionReceiver.class);
@@ -571,17 +783,16 @@ public class JChattSyncService extends Service {
                 this,
                 notifId + 1,
                 replyIntent,
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-                    ? (PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE)
-                    : (PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0))
+                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_MUTABLE : 0)
             );
 
             NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(
-                R.drawable.ic_action_reply,
+                R.drawable.ic_call_answer,
                 "Reply",
                 replyPi
             ).addRemoteInput(remoteInput).build();
 
+            // Mark as Read Action
             Intent readIntent = new Intent(this, NotificationActionReceiver.class);
             readIntent.setAction(NotificationActionReceiver.ACTION_MARK_READ);
             readIntent.putExtra("chatId", chatId);
@@ -595,20 +806,20 @@ public class JChattSyncService extends Service {
             );
 
             NotificationCompat.Action readAction = new NotificationCompat.Action.Builder(
-                R.drawable.ic_action_read,
+                R.drawable.ic_call_end,
                 "Mark as read",
                 readPi
             ).build();
 
             Notification publicVersion = new NotificationCompat.Builder(this, CHANNEL_MESSAGES_ID)
-                .setSmallIcon(R.drawable.ic_notification)
+                .setSmallIcon(R.mipmap.ic_launcher)
                 .setColor(COLOR_WHATSAPP_EMERALD)
                 .setContentTitle(sender)
                 .setContentText(text)
                 .build();
 
             NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_MESSAGES_ID)
-                .setSmallIcon(R.drawable.ic_notification)
+                .setSmallIcon(R.mipmap.ic_launcher)
                 .setColor(COLOR_WHATSAPP_EMERALD)
                 .setContentTitle(sender)
                 .setContentText(text)

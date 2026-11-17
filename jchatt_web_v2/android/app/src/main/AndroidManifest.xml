@@ -19,6 +19,8 @@
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
             android:enabled="true"
             android:exported="true">
 
@@ -28,6 +30,18 @@
             </intent-filter>
 
         </activity>
+
+        <!-- Telegram-Grade Full Screen Incoming Call Activity (Lockscreen Wakeup) -->
+        <activity
+            android:name=".IncomingCallActivity"
+            android:exported="false"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:showForAllUsers="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBarLaunch" />
 
         <!-- Disguise 1: Calculator Launcher Alias -->
         <activity-alias
@@ -90,11 +104,10 @@
             android:stopWithTask="false"
             android:exported="false" />
 
-        <!-- JChatt Background Sync Service running in isolated :sync process (Never killed on task removal / RAM clear) -->
+        <!-- Telegram-Grade JChatt Background Sync & VoIP Service -->
         <service
             android:name=".JChattSyncService"
-            android:process=":sync"
-            android:foregroundServiceType="dataSync"
+            android:foregroundServiceType="dataSync|phoneCall|remoteMessaging"
             android:stopWithTask="false"
             android:exported="false" />
 
@@ -113,7 +126,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- WhatsApp Inline Reply & Mark Read Action Receiver -->
+        <!-- Inline Reply, Mark Read, and Call Action Receiver -->
         <receiver
             android:name=".NotificationActionReceiver"
             android:enabled="true"
@@ -121,6 +134,8 @@
             <intent-filter>
                 <action android:name="com.jjcoders.jchatt.ACTION_REPLY" />
                 <action android:name="com.jjcoders.jchatt.ACTION_MARK_READ" />
+                <action android:name="com.jjcoders.jchatt.ACTION_DECLINE_CALL" />
+                <action android:name="com.jjcoders.jchatt.ACTION_ANSWER_CALL" />
             </intent-filter>
         </receiver>
     </application>
@@ -133,12 +148,16 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" />
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" />
 </manifest>

@@ -262,12 +262,47 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        processIncomingIntent(intent);
+    }
+
+    private void processIncomingIntent(Intent intent) {
+        if (intent == null) return;
+        String action = intent.getAction();
+        String chatId = intent.getStringExtra("chatId");
+        String callId = intent.getStringExtra("callId");
+        String callerUid = intent.getStringExtra("callerUid");
+        boolean isVideo = intent.getBooleanExtra("video", false);
+
+        if ("ACTION_ANSWER_CALL".equals(action) && callId != null) {
+            if (bridge != null && bridge.getWebView() != null) {
+                String js = "setTimeout(function() { " +
+                    "if (window.JFE && window.JFE.answerCall) { " +
+                    "  window.JFE.answerCall({ callId: '" + callId + "', caller: { uid: '" + (callerUid != null ? callerUid : "") + "' }, video: " + isVideo + " }); " +
+                    "} }, 500);";
+                bridge.getWebView().evaluateJavascript(js, null);
+            }
+        } else if (chatId != null && !chatId.isEmpty()) {
+            if (bridge != null && bridge.getWebView() != null) {
+                String js = "setTimeout(function() { " +
+                    "if (window.JCS && window.JCS.openChat) { " +
+                    "  window.JCS.openChat('" + chatId + "'); " +
+                    "} }, 500);";
+                bridge.getWebView().evaluateJavascript(js, null);
+            }
+        }
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         try {
             if (wakeLock != null && wakeLock.isHeld()) {
                 wakeLock.release();
             }
+            processIncomingIntent(getIntent());
         } catch (Exception ignored) {}
     }
 

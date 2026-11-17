@@ -19,6 +19,8 @@ import java.nio.charset.StandardCharsets;
 public class NotificationActionReceiver extends BroadcastReceiver {
     public static final String ACTION_REPLY = "com.jjcoders.jchatt.ACTION_REPLY";
     public static final String ACTION_MARK_READ = "com.jjcoders.jchatt.ACTION_MARK_READ";
+    public static final String ACTION_DECLINE_CALL = "com.jjcoders.jchatt.ACTION_DECLINE_CALL";
+    public static final String ACTION_ANSWER_CALL = "com.jjcoders.jchatt.ACTION_ANSWER_CALL";
     public static final String EXTRA_VOICE_REPLY = "extra_voice_reply";
 
     @Override
@@ -39,8 +41,24 @@ public class NotificationActionReceiver extends BroadcastReceiver {
         String uid = prefs.getString("sync_uid", null);
         String token = prefs.getString("sync_token", null);
 
-        if (ACTION_MARK_READ.equals(action)) {
-            // Dismiss notification and mark delivered/read
+        if (ACTION_DECLINE_CALL.equals(action)) {
+            String callId = intent.getStringExtra("callId");
+            if (uid != null && callId != null) {
+                declineCallAsync(uid, callId);
+            }
+        } else if (ACTION_ANSWER_CALL.equals(action)) {
+            String callId = intent.getStringExtra("callId");
+            String callerUid = intent.getStringExtra("callerUid");
+            boolean isVideo = intent.getBooleanExtra("video", false);
+
+            Intent mainIntent = new Intent(context, MainActivity.class);
+            mainIntent.setAction("ACTION_ANSWER_CALL");
+            mainIntent.putExtra("callId", callId);
+            mainIntent.putExtra("callerUid", callerUid);
+            mainIntent.putExtra("video", isVideo);
+            mainIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            context.startActivity(mainIntent);
+        } else if (ACTION_MARK_READ.equals(action)) {
             if (chatId != null && uid != null) {
                 markChatReadAsync(chatId, uid, token);
             }
@@ -53,6 +71,25 @@ public class NotificationActionReceiver extends BroadcastReceiver {
                 }
             }
         }
+    }
+
+    private void declineCallAsync(String uid, String callId) {
+        new Thread(() -> {
+            try {
+                String urlStr = "https://jjcodersjchatt-default-rtdb.firebaseio.com/v2/calls/" + uid + "/" + callId + "/status.json";
+                URL url = new URL(urlStr);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("PUT");
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setDoOutput(true);
+                conn.setConnectTimeout(6000);
+                try (OutputStream os = conn.getOutputStream()) {
+                    os.write("\"declined\"".getBytes(StandardCharsets.UTF_8));
+                }
+                conn.getResponseCode();
+                conn.disconnect();
+            } catch (Exception ignored) {}
+        }).start();
     }
 
     private void markChatReadAsync(String chatId, String uid, String token) {
