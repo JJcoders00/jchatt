@@ -1,0 +1,50 @@
+{
+  "auditResults": {
+    "tester": {
+      "passed": [
+        "Landing page is naturally scrollable (Height: 7772px)",
+        "Calculator performs accurate floating math (7 × 8 = 56)",
+        "Calculator AC clears display to 0",
+        "Stealth sequence 314159= reveals primary vault",
+        "Duress sequence 9999= reveals decoy vault",
+        "Mobile responsive hamburger menu opens cleanly",
+        "Mobile menu closes on navigation click",
+        "Web Messenger container #app mounted",
+        "Web Messenger UI views rendered successfully"
+      ],
+      "warnings": [],
+      "failed": []
+    },
+    "hacker": {
+      "passed": [
+        "Zero cleartext cryptographic secret leaks found in localStorage",
+        "Zero corporate tracking beacons (No GA, GTM, FB, Hotjar)",
+        "escHtml securely defangs HTML injection tags (<script>, <img>)",
+        "WebCrypto & CSPRNG (crypto.getRandomValues) natively active"
+      ],
+      "warnings": [],
+      "failed": []
+    },
+    "lawyer": {
+      "passed": [
+        "Statutory protection verified: IT Act 2000 Section 79 (Safe Harbor)",
+        "Statutory protection verified: Rule 3(2) Grievance Officer",
+        "Statutory protection verified: Mandatory 24-hour Acknowledgment",
+        "Statutory protection verified: 15-day Resolution Timeline",
+        "Statutory protection verified: DPDPA 2023 Statutory Mapping",
+        "Statutory protection verified: CDA Section 230 Immunity",
+        "Statutory protection verified: DMCA Takedown Agent",
+        "Statutory protection verified: Law Enforcement Technical Policy",
+        "Terms clause verified: AS-IS Warranty Disclaimer",
+        "Terms clause verified: Limitation of Liability Ceiling (₹100 / $1)",
+        "Terms clause verified: Complete User Indemnification",
+        "Terms clause verified: Class Action Waiver & Arbitration",
+        "Terms clause verified: Lost Seed Phrase Non-Recoverable Clause",
+        "Privacy policy covers DPDPA 2023, GDPR, and zero-knowledge data stance"
+      ],
+      "warnings": [],
+      "failed": []
+    }
+  },
+  "pageErrors": []
+}

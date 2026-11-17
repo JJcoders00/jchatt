@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cryptographic Security Whitepaper · JChatt</title>
+<meta name="description" content="Technical & Cryptographic Architecture Whitepaper for JChatt. AES-256-GCM, PBKDF2-HMAC-SHA256, WebRTC DTLS-SRTP P2P Calling, Duress Vaults, and Zero-Knowledge Relay Design.">
+<meta name="theme-color" content="#0a2230">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./images/logo/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800;900&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0a2230;--ink-2:#123140;--ink-3:#06151e;
+  --lime:#82d82f;--lime-d:#4f9a12;--lime-l:#e2f5cb;
+  --orange:#ff6a2b;--sky-l:#e3f3fa;--sky-2:#7cc4e4;
+  --teal:#2d9d86;--paper:#f3f5f5;--white:#fff;--text:#10222b;--mute:#5d717a;--rim:#e3eaec;--rim-d:#cfd9dc;
+  --wrap:1100px;--gut:24px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--paper);color:var(--text);font-family:'Nunito',system-ui,sans-serif;font-size:16px;line-height:1.65;scroll-behavior:smooth}
+body{min-height:100vh;display:flex;flex-direction:column}
+a{color:var(--teal);text-decoration:none;font-weight:700}
+a:hover{text-decoration:underline}
+code{background:#e8eff1;padding:2px 6px;border-radius:6px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:0.9em;color:var(--ink)}
+pre{background:var(--ink-3);color:#e2f5cb;padding:16px;border-radius:12px;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:0.88em;line-height:1.5;margin:16px 0}
+.wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--gut);width:100%}
+
+header{background:var(--ink);color:var(--white);padding:24px 0;border-bottom:1px solid rgba(255,255,255,0.08)}
+header .wrap{display:flex;align-items:center;justify-content:space-between}
+.logo-lock{display:inline-flex;align-items:center;gap:12px;font-family:'Sora',sans-serif;font-weight:800;font-size:1.25rem;color:var(--white);text-decoration:none}
+.logo-lock img{width:36px;height:36px;border-radius:10px}
+.nav-back{background:rgba(255,255,255,0.08);padding:8px 16px;border-radius:999px;font-size:0.875rem;color:var(--white);transition:0.2s}
+.nav-back:hover{background:var(--lime);color:var(--ink);text-decoration:none}
+
+main{flex:1;padding:48px 0 80px}
+article{background:var(--white);border-radius:24px;padding:48px;box-shadow:0 12px 32px rgba(10,34,48,0.04);border:1px solid var(--rim)}
+@media(max-width:768px){article{padding:24px 20px;border-radius:16px}}
+
+h1{font-family:'Sora',sans-serif;font-size:2.25rem;color:var(--ink);margin-bottom:8px;line-height:1.2}
+.meta{color:var(--mute);font-size:0.9rem;margin-bottom:32px;display:flex;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--rim);padding-bottom:16px}
+.badge{background:var(--lime-l);color:var(--lime-d);padding:3px 10px;border-radius:999px;font-weight:800;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.04em}
+
+h2{font-family:'Sora',sans-serif;font-size:1.45rem;color:var(--ink);margin-top:36px;margin-bottom:14px;padding-top:12px;border-top:1px solid var(--rim)}
+h3{font-family:'Sora',sans-serif;font-size:1.15rem;color:var(--ink-2);margin-top:20px;margin-bottom:8px}
+p,ul,ol{margin-bottom:16px}
+ul,ol{padding-left:24px}
+li{margin-bottom:8px}
+
+.callout{background:var(--sky-l);border-left:4px solid var(--teal);padding:16px 20px;border-radius:0 12px 12px 0;margin:24px 0}
+.callout-warning{background:var(--orange-l);border-left-color:var(--orange)}
+.diagram-box{background:var(--ink-2);color:var(--white);border-radius:14px;padding:20px;margin:20px 0;font-family:ui-monospace,monospace;font-size:0.85rem;line-height:1.45;overflow-x:auto}
+
+table{width:100%;border-collapse:collapse;margin:24px 0;font-size:0.92rem}
+th,td{border:1px solid var(--rim);padding:12px 14px;text-align:left}
+th{background:#f8fafb;color:var(--ink);font-weight:700}
+
+footer{background:var(--ink-3);color:var(--mute);padding:32px 0;font-size:0.875rem}
+footer a{color:#a9d3e5}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <a href="./" class="logo-lock">
+      <img src="./images/logo/icon.png" alt="JChatt Icon" onerror="this.src='./favicon.svg'">
+      <span>JChatt Security Whitepaper</span>
+    </a>
+    <a href="./" class="nav-back">← Back to Overview</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <article>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <span class="badge">Technical Specification v2.4</span>
+      <span class="badge" style="background:#e3f3fa;color:#2d9d86">Zero-Knowledge Protocol</span>
+    </div>
+    <h1>JChatt Cryptographic Architecture & Threat Model</h1>
+    <div class="meta">
+      <span><strong>Document:</strong> JCHATT-WP-2026-A</span>
+      <span><strong>Classification:</strong> Public / Open Specification</span>
+      <span><strong>Lead Authors:</strong> JChatt Protocol Engineering Group</span>
+      <span><strong>Published:</strong> 2026</span>
+    </div>
+
+    <div class="callout">
+      <strong>Executive Abstract:</strong> JChatt is an asymmetric zero-telemetry private communications system engineered to eliminate corporate metadata harvesting, centralized directory vulnerabilities, phone number identification, and physical coercion vectors. All communication payloads are encrypted client-side via AES-256-GCM before socket transmission; identity keys are derived deterministically on-device via 12-word seed phrases; and anti-coercion vaults provide mathematically plausible deniability.
+    </div>
+
+    <h2>1. Threat Model & Adversarial Assumptions</h2>
+    <p>JChatt is engineered against three primary classes of adversaries:</p>
+    <ul>
+      <li><strong>Adversary 1: Active Network & Relay Intermediaries (ISP, Cloud Relay, State Surveillance).</strong> We assume all network traffic traversing relay nodes and Firebase RTDB transports can be intercepted, inspected, or recorded. The adversary has full visibility into packet timing and ciphertext payloads. <em>Defense:</em> Zero-knowledge client-side AES-256-GCM encryption with 12-byte cryptographically secure random nonces per message; TLS 1.3 socket encapsulation; zero server knowledge of encryption keys.</li>
+      <li><strong>Adversary 2: Compromised or Subpoenaed Infrastructure.</strong> We assume relay servers, database hosts, or CDN edges may be seized or subpoenaed. <em>Defense:</em> The relay stores zero cleartext, zero phone numbers, zero address books, and zero recovery emails. The cloud database is treated purely as a blind encrypted mailbox where all records resemble pseudorandom noise.</li>
+      <li><strong>Adversary 3: Physical Device Seizure & Coerced Unlock.</strong> We assume the user may face forced inspection by hostile border agents, attackers, or coercive third parties. <em>Defense:</em> Dual PIN architecture (Master PIN vs Duress PIN), functional 4-function Calculator disguise mode, and isolated Decoy Storage partition. Entering a Duress PIN renders a pristine dummy chat interface with zero cryptographic pointers to the primary vault.</li>
+    </ul>
+
+    <h2>2. Identity Key Derivation & Sovereignty</h2>
+    <p>Unlike conventional messengers that bind identity to a telecommunications IMSI/SIM card or centralized SMS verification, JChatt uses a self-sovereign seed architecture:</p>
+    
+    <div class="diagram-box">
+[ User Device CSPRNG: crypto.getRandomValues() ]
+                 │
+                 ▼ (128-bit Entropy)
+    12-Word Mnemonic Wordlist (BIP39 English)
+                 │
+                 ▼ PBKDF2-HMAC-SHA256 (100,000 Iterations)
+      Master Cryptographic Seed (256-bit)
+        ├── Key Derivation: AES-256 Key Encryption Key (KEK)
+        └── Public Identifier Hash (Sha-256 truncate -> @handle)
+    </div>
+
+    <p>
+      The 12-word seed phrase never leaves the client's volatile memory. When stored persistently in browser storage or Android Keystore, it is encrypted under the user's device Master PIN via WebCrypto AES-GCM. If the device is destroyed, the user recreates the identical cryptographic identity on any other device without contacting any server.
+    </p>
+
+    <h2>3. Message Cryptography: AES-256-GCM</h2>
+    <p>
+      Every message exchanged on JChatt is encrypted using the Advanced Encryption Standard in Galois/Counter Mode (AES-256-GCM), providing both confidentiality and provable message integrity.
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Specification</th>
+          <th>Cryptographic Function</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Cipher Algorithm</td>
+          <td>AES-256 (NIST SP 800-38D)</td>
+          <td>Symmetric payload confidentiality with 256-bit key entropy.</td>
+        </tr>
+        <tr>
+          <td>Initialization Vector (IV)</td>
+          <td>96-bit (12-byte) CSPRNG</td>
+          <td>Generated freshly per message via <code>crypto.getRandomValues</code>. Replay resistant.</td>
+        </tr>
+        <tr>
+          <td>Authentication Tag</td>
+          <td>128-bit GMAC Tag</td>
+          <td>Guarantees ciphertext integrity; detects any bit-flipping or tampering.</td>
+        </tr>
+        <tr>
+          <td>Key Derivation (KDF)</td>
+          <td>PBKDF2-HMAC-SHA256</td>
+          <td>100,000 rounds salt-expanded key stretching for shared chat secrets.</td>
+        </tr>
+        <tr>
+          <td>Transport Protocol</td>
+          <td>HTTPS / WSS / TLS 1.3</td>
+          <td>Dual-layer transport encryption wrapping encrypted ciphertexts.</td>
+        </tr>
+      </tbody>
+    </tbody>
+    </table>
+
+    <pre>
+// Cryptographic Payload Format Transmitted over Relay
+{
+  "senderId": "anon_9f81a7b",
+  "recipientId": "anon_3c4d28e",
+  "ciphertext": "e2f180ba7d6c...", // AES-256-GCM encrypted UTF-8 bytes
+  "iv": "9a2f7c41e890b23412567890",   // Unique 12-byte IV in hex
+  "tag": "4b9e28f107c8...",          // 128-bit authentication tag
+  "timestamp": 1731776400000
+}
+    </pre>
+
+    <h2>4. WebRTC Peer-to-Peer Calling & DTLS-SRTP</h2>
+    <p>
+      Voice and video calls in JChatt bypass centralized audio mixing servers. Signaling is negotiated through encrypted ephemeral handshake packets, after which direct peer-to-peer media streams are established:
+    </p>
+    <ul>
+      <li><strong>DTLS-SRTP Encryption:</strong> Audio/Video frames are encrypted using the Secure Real-time Transport Protocol (SRTP) authenticated via Datagram Transport Layer Security (DTLS). No relay server possesses the decryption keys.</li>
+      <li><strong>P2P Direct Sockets:</strong> Media packets flow directly between device IP addresses whenever NAT conditions permit.</li>
+      <li><strong>STUN/TURN Fallback:</strong> In symmetric NAT scenarios, an ephemeral TURN relay forwards encrypted UDP packets without decryption capabilities.</li>
+    </ul>
+
+    <h2>5. Anti-Coercion & Physical Plausible Deniability</h2>
+    <p>
+      Physical access is a dominant attack vector in high-risk jurisdictions. Traditional messengers with biometric unlock leak the existence of encrypted chats the moment the device is unlocked. JChatt implements two layers of physical plausible deniability:
+    </p>
+
+    <h3>A. 4-Function Calculator Disguise</h3>
+    <p>
+      When Calculator Disguise is enabled in Security Settings, the app launches with the label "Calculator" and an identical iOS/Android calculator layout. It performs exact floating-point arithmetic (addition, subtraction, multiplication, square roots). The encrypted messenger is revealed only when the user enters their custom stealth secret sequence followed by <code>=</code> or <code>%</code>. To any forensic or casual observer, the application is indistinguishable from a standard utility.
+    </p>
+
+    <h3>B. Duress PIN & Decoy Vault Partition</h3>
+    <p>
+      Users configure two distinct PIN codes:
+    </p>
+    <ul>
+      <li><strong>Master PIN (e.g., <code>1337</code>):</strong> Unlocks the authentic primary database, keys, and encrypted conversations.</li>
+      <li><strong>Duress PIN (e.g., <code>9999</code>):</strong> If forced to unlock under physical threat or border checkpoint detention, entering this PIN decrypts an entirely isolated Decoy Partition pre-populated with harmless benign conversations (e.g., shopping lists, cooking recipes). The primary key vault remains completely unreferenced, preventing any forensic indication that another database exists.</li>
+    </ul>
+
+    <h2>6. Android Background Delivery Architecture</h2>
+    <p>
+      Modern mobile operating systems aggressively terminate background network connections. To maintain timely message alerts without relying on privacy-invasive Google Cloud Messaging payload inspection, JChatt uses a dedicated isolated Android service:
+    </p>
+    <div class="diagram-box">
+[ Device Boot / App Close ]
+           │
+           ▼
+Android Isolated Service (:sync)  ──>  Battery Whitelist Request
+           │
+           ▼ Persistent SSE Stream (Server-Sent Events)
+Firebase RTDB Realtime Node: /v2/userChats/{uid}
+           │
+           ▼ Encrypted Notification Ping
+High-Priority Android Heads-up Alert (Local decryption or generic chime)
+    </div>
+    <ul>
+      <li><strong>Isolated Process:</strong> The sync worker runs in an independent Linux process (<code>:sync</code>) unaffected by main app UI disposal.</li>
+      <li><strong>Automatic Token Refresh:</strong> Session tokens are regenerated every 50 minutes using local credentials, ensuring indefinite message listening.</li>
+      <li><strong>Zero Payload Notification:</strong> Cloud notification triggers do not transmit message content in cleartext; alerts display generic sovereign indicators until unlocked.</li>
+    </ul>
+
+    <h2>7. Open Source Auditability</h2>
+    <p>
+      True cryptographic privacy requires absolute code transparency. JChatt is committed to reproducible, auditable open source engineering:
+    </p>
+    <ul>
+      <li>Complete repository: <a href="https://github.com/JJcoders00/jchatt">github.com/JJcoders00/jchatt</a></li>
+      <li>Zero proprietary analytics, zero tracking SDKs, zero third-party ads.</li>
+      <li>Standard WebCrypto API implementation conforming to W3C cryptographic recommendations.</li>
+    </ul>
+
+    <h2>8. Security Audit & Bug Bounty</h2>
+    <p>
+      We welcome scrutiny from academic cryptographers and whitehat security researchers. If you identify an issue in our protocol or implementation, please report responsibly to:
+    </p>
+    <p>
+      <strong>JChatt Security Response Team</strong><br>
+      PGP Key ID: <code>0x4F8A9C2E</code><br>
+      Direct Email: <code>security@jjcoders.org</code><br>
+      Or encrypted JChatt message to handle: <code>@security</code>
+    </p>
+  </article>
+</main>
+
+<footer>
+  <div class="wrap" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:16px">
+    <div>© 2026 JChatt. Sovereign, zero-telemetry messaging.</div>
+    <div>
+      <a href="./">Home</a> ·
+      <a href="./web.html">Web App</a> ·
+      <a href="./privacy.html">Privacy Policy</a> ·
+      <a href="./terms.html">Terms</a> ·
+      <a href="./compliance.html">Compliance & Safe Harbor</a> ·
+      <a href="./#download">Download APK</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

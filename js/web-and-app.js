@@ -1637,7 +1637,7 @@
     var hash = (global.location.hash || '').toLowerCase();
     var sp = new URLSearchParams(global.location.search || '');
     var isNative = !!(global.Capacitor && global.Capacitor.isNativePlatform && global.Capacitor.isNativePlatform());
-    var wantsWeb = isNative || p === '/web' || p.indexOf('/web') === 0 || p === '/app' || hash === '#/web' || sp.has('app') || sp.has('invite') || sp.has('pair');
+    var wantsWeb = isNative || p === '/web' || p.indexOf('/web') === 0 || p === '/web.html' || p === '/app' || hash === '#/web' || sp.has('app') || sp.has('invite') || sp.has('pair') || hash.indexOf('#chat') === 0;
     var isLegalPrivacy = p === '/privacy' || hash === '#/privacy';
     var isLegalTerms = p === '/terms' || hash === '#/terms';
     var isLegalSecurity = p === '/security' || hash === '#/security';
