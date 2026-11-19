@@ -65,6 +65,10 @@
         "destination": "/whitepaper.html"
       },
       {
+        "source": "/honors",
+        "destination": "/honors.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
