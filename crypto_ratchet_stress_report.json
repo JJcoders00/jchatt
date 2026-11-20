@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-11-20T11:56:32.264Z",
+  "test1": {
+    "pass": true,
+    "count": 1000,
+    "durationMs": 22
+  },
+  "test2": {
+    "pass": true,
+    "details": "AES-GCM AuthTag integrity check"
+  },
+  "test3": {
+    "pass": true,
+    "replaysRejected": 50
+  }
+}
