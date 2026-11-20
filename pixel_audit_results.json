@@ -1,0 +1,640 @@
+{
+  "totalChecked": 30,
+  "overflowBugs": 0,
+  "tapTargetIssues": 0,
+  "contrastIssues": 0,
+  "pages": [
+    {
+      "name": "Landing_Hero",
+      "url": "file:///C:/Users/jomet/Documents/projects/Jchatt/dist/index.html",
+      "viewports": [
+        {
+          "viewport": "Mobile_Compact_360x740",
+          "metrics": {
+            "viewportWidth": 360,
+            "scrollWidth": 360,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 37,
+            "overflowSample": [
+              {
+                "tag": "table",
+                "className": "comparison-table",
+                "right": 665,
+                "excess": 305
+              },
+              {
+                "tag": "thead",
+                "className": "",
+                "right": 665,
+                "excess": 305
+              },
+              {
+                "tag": "tr",
+                "className": "",
+                "right": 665,
+                "excess": 305
+              }
+            ],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Landing_Hero_Mobile_Compact_360x740.png"
+        },
+        {
+          "viewport": "Mobile_iPhone15Pro_393x852",
+          "metrics": {
+            "viewportWidth": 393,
+            "scrollWidth": 393,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 36,
+            "overflowSample": [
+              {
+                "tag": "table",
+                "className": "comparison-table",
+                "right": 665,
+                "excess": 272
+              },
+              {
+                "tag": "thead",
+                "className": "",
+                "right": 665,
+                "excess": 272
+              },
+              {
+                "tag": "tr",
+                "className": "",
+                "right": 665,
+                "excess": 272
+              }
+            ],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Landing_Hero_Mobile_iPhone15Pro_393x852.png"
+        },
+        {
+          "viewport": "Mobile_Android_Pixel_412x915",
+          "metrics": {
+            "viewportWidth": 412,
+            "scrollWidth": 412,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 29,
+            "overflowSample": [
+              {
+                "tag": "table",
+                "className": "comparison-table",
+                "right": 665,
+                "excess": 253
+              },
+              {
+                "tag": "thead",
+                "className": "",
+                "right": 665,
+                "excess": 253
+              },
+              {
+                "tag": "tr",
+                "className": "",
+                "right": 665,
+                "excess": 253
+              }
+            ],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Landing_Hero_Mobile_Android_Pixel_412x915.png"
+        },
+        {
+          "viewport": "Tablet_iPad_768x1024",
+          "metrics": {
+            "viewportWidth": 768,
+            "scrollWidth": 768,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Landing_Hero_Tablet_iPad_768x1024.png"
+        },
+        {
+          "viewport": "Laptop_MacBook_1440x900",
+          "metrics": {
+            "viewportWidth": 1440,
+            "scrollWidth": 1440,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Landing_Hero_Laptop_MacBook_1440x900.png"
+        },
+        {
+          "viewport": "Desktop_FHD_1920x1080",
+          "metrics": {
+            "viewportWidth": 1920,
+            "scrollWidth": 1920,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Landing_Hero_Desktop_FHD_1920x1080.png"
+        }
+      ]
+    },
+    {
+      "name": "Honors_Exhibition",
+      "url": "file:///C:/Users/jomet/Documents/projects/Jchatt/dist/honors.html",
+      "viewports": [
+        {
+          "viewport": "Mobile_Compact_360x740",
+          "metrics": {
+            "viewportWidth": 360,
+            "scrollWidth": 360,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Honors_Exhibition_Mobile_Compact_360x740.png"
+        },
+        {
+          "viewport": "Mobile_iPhone15Pro_393x852",
+          "metrics": {
+            "viewportWidth": 393,
+            "scrollWidth": 393,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Honors_Exhibition_Mobile_iPhone15Pro_393x852.png"
+        },
+        {
+          "viewport": "Mobile_Android_Pixel_412x915",
+          "metrics": {
+            "viewportWidth": 412,
+            "scrollWidth": 412,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Honors_Exhibition_Mobile_Android_Pixel_412x915.png"
+        },
+        {
+          "viewport": "Tablet_iPad_768x1024",
+          "metrics": {
+            "viewportWidth": 768,
+            "scrollWidth": 768,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Honors_Exhibition_Tablet_iPad_768x1024.png"
+        },
+        {
+          "viewport": "Laptop_MacBook_1440x900",
+          "metrics": {
+            "viewportWidth": 1440,
+            "scrollWidth": 1440,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Honors_Exhibition_Laptop_MacBook_1440x900.png"
+        },
+        {
+          "viewport": "Desktop_FHD_1920x1080",
+          "metrics": {
+            "viewportWidth": 1920,
+            "scrollWidth": 1920,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Honors_Exhibition_Desktop_FHD_1920x1080.png"
+        }
+      ]
+    },
+    {
+      "name": "Compliance_Center",
+      "url": "file:///C:/Users/jomet/Documents/projects/Jchatt/dist/compliance.html",
+      "viewports": [
+        {
+          "viewport": "Mobile_Compact_360x740",
+          "metrics": {
+            "viewportWidth": 360,
+            "scrollWidth": 360,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 28,
+            "overflowSample": [
+              {
+                "tag": "thead",
+                "className": "",
+                "right": 404,
+                "excess": 44
+              },
+              {
+                "tag": "tr",
+                "className": "",
+                "right": 404,
+                "excess": 44
+              },
+              {
+                "tag": "th",
+                "className": "",
+                "right": 404,
+                "excess": 44
+              }
+            ],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Compliance_Center_Mobile_Compact_360x740.png"
+        },
+        {
+          "viewport": "Mobile_iPhone15Pro_393x852",
+          "metrics": {
+            "viewportWidth": 393,
+            "scrollWidth": 393,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 14,
+            "overflowSample": [
+              {
+                "tag": "thead",
+                "className": "",
+                "right": 404,
+                "excess": 11
+              },
+              {
+                "tag": "tr",
+                "className": "",
+                "right": 404,
+                "excess": 11
+              },
+              {
+                "tag": "th",
+                "className": "",
+                "right": 404,
+                "excess": 11
+              }
+            ],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Compliance_Center_Mobile_iPhone15Pro_393x852.png"
+        },
+        {
+          "viewport": "Mobile_Android_Pixel_412x915",
+          "metrics": {
+            "viewportWidth": 412,
+            "scrollWidth": 412,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Compliance_Center_Mobile_Android_Pixel_412x915.png"
+        },
+        {
+          "viewport": "Tablet_iPad_768x1024",
+          "metrics": {
+            "viewportWidth": 768,
+            "scrollWidth": 768,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Compliance_Center_Tablet_iPad_768x1024.png"
+        },
+        {
+          "viewport": "Laptop_MacBook_1440x900",
+          "metrics": {
+            "viewportWidth": 1440,
+            "scrollWidth": 1440,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Compliance_Center_Laptop_MacBook_1440x900.png"
+        },
+        {
+          "viewport": "Desktop_FHD_1920x1080",
+          "metrics": {
+            "viewportWidth": 1920,
+            "scrollWidth": 1920,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Compliance_Center_Desktop_FHD_1920x1080.png"
+        }
+      ]
+    },
+    {
+      "name": "Privacy_Charter",
+      "url": "file:///C:/Users/jomet/Documents/projects/Jchatt/dist/privacy.html",
+      "viewports": [
+        {
+          "viewport": "Mobile_Compact_360x740",
+          "metrics": {
+            "viewportWidth": 360,
+            "scrollWidth": 360,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 22,
+            "overflowSample": [
+              {
+                "tag": "thead",
+                "className": "",
+                "right": 415,
+                "excess": 55
+              },
+              {
+                "tag": "tr",
+                "className": "",
+                "right": 415,
+                "excess": 55
+              },
+              {
+                "tag": "th",
+                "className": "",
+                "right": 415,
+                "excess": 55
+              }
+            ],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Privacy_Charter_Mobile_Compact_360x740.png"
+        },
+        {
+          "viewport": "Mobile_iPhone15Pro_393x852",
+          "metrics": {
+            "viewportWidth": 393,
+            "scrollWidth": 393,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 17,
+            "overflowSample": [
+              {
+                "tag": "thead",
+                "className": "",
+                "right": 415,
+                "excess": 22
+              },
+              {
+                "tag": "tr",
+                "className": "",
+                "right": 415,
+                "excess": 22
+              },
+              {
+                "tag": "th",
+                "className": "",
+                "right": 415,
+                "excess": 22
+              }
+            ],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Privacy_Charter_Mobile_iPhone15Pro_393x852.png"
+        },
+        {
+          "viewport": "Mobile_Android_Pixel_412x915",
+          "metrics": {
+            "viewportWidth": 412,
+            "scrollWidth": 412,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 16,
+            "overflowSample": [
+              {
+                "tag": "thead",
+                "className": "",
+                "right": 415,
+                "excess": 3
+              },
+              {
+                "tag": "tr",
+                "className": "",
+                "right": 415,
+                "excess": 3
+              },
+              {
+                "tag": "th",
+                "className": "",
+                "right": 415,
+                "excess": 3
+              }
+            ],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Privacy_Charter_Mobile_Android_Pixel_412x915.png"
+        },
+        {
+          "viewport": "Tablet_iPad_768x1024",
+          "metrics": {
+            "viewportWidth": 768,
+            "scrollWidth": 768,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Privacy_Charter_Tablet_iPad_768x1024.png"
+        },
+        {
+          "viewport": "Laptop_MacBook_1440x900",
+          "metrics": {
+            "viewportWidth": 1440,
+            "scrollWidth": 1440,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Privacy_Charter_Laptop_MacBook_1440x900.png"
+        },
+        {
+          "viewport": "Desktop_FHD_1920x1080",
+          "metrics": {
+            "viewportWidth": 1920,
+            "scrollWidth": 1920,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Privacy_Charter_Desktop_FHD_1920x1080.png"
+        }
+      ]
+    },
+    {
+      "name": "Terms_Of_Service",
+      "url": "file:///C:/Users/jomet/Documents/projects/Jchatt/dist/terms.html",
+      "viewports": [
+        {
+          "viewport": "Mobile_Compact_360x740",
+          "metrics": {
+            "viewportWidth": 360,
+            "scrollWidth": 360,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Terms_Of_Service_Mobile_Compact_360x740.png"
+        },
+        {
+          "viewport": "Mobile_iPhone15Pro_393x852",
+          "metrics": {
+            "viewportWidth": 393,
+            "scrollWidth": 393,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Terms_Of_Service_Mobile_iPhone15Pro_393x852.png"
+        },
+        {
+          "viewport": "Mobile_Android_Pixel_412x915",
+          "metrics": {
+            "viewportWidth": 412,
+            "scrollWidth": 412,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Terms_Of_Service_Mobile_Android_Pixel_412x915.png"
+        },
+        {
+          "viewport": "Tablet_iPad_768x1024",
+          "metrics": {
+            "viewportWidth": 768,
+            "scrollWidth": 768,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Terms_Of_Service_Tablet_iPad_768x1024.png"
+        },
+        {
+          "viewport": "Laptop_MacBook_1440x900",
+          "metrics": {
+            "viewportWidth": 1440,
+            "scrollWidth": 1440,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Terms_Of_Service_Laptop_MacBook_1440x900.png"
+        },
+        {
+          "viewport": "Desktop_FHD_1920x1080",
+          "metrics": {
+            "viewportWidth": 1920,
+            "scrollWidth": 1920,
+            "hasHorizontalOverflow": false,
+            "overflowCount": 0,
+            "overflowSample": [],
+            "smallTapTargetsCount": 0,
+            "smallTapTargetsSample": [],
+            "brokenImagesCount": 0,
+            "brokenImages": []
+          },
+          "screenshot": "C:\\Users\\jomet\\Documents\\projects\\Jchatt\\screenshots\\pixel_audit\\Terms_Of_Service_Desktop_FHD_1920x1080.png"
+        }
+      ]
+    }
+  ]
+}
