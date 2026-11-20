@@ -1333,11 +1333,24 @@
     answerCall: async function (inc) {
       if (!Engine.uid || !inc || !inc.callId) return;
       var callId = inc.callId;
+      if (!inc.offer) {
+        try {
+          var snap = await Engine.db.ref('v2/calls/' + Engine.uid + '/' + callId).once('value');
+          if (snap && snap.exists()) {
+            inc = Object.assign({}, snap.val(), inc);
+          }
+        } catch (e) {}
+      }
+      var fromUid = inc.from || (inc.caller && inc.caller.uid) || inc.callerUid || '';
+      var fromName = inc.fromName || (inc.caller && inc.caller.name) || inc.callerName || 'Contact';
+      var fromHandle = inc.fromHandle || (inc.caller && inc.caller.handle) || inc.callerHandle || '';
+      var fromAvatar = inc.fromAvatar || (inc.caller && inc.caller.avatar) || inc.callerAvatar || '';
+
       Engine.incomingCall = null;
       if (global.JCSOUND) global.JCSOUND.stopAll();
       Engine.activeCall = {
         callId: callId,
-        peer: { uid: inc.from, name: inc.fromName, handle: inc.fromHandle, avatar: inc.fromAvatar },
+        peer: { uid: fromUid, name: fromName, handle: fromHandle, avatar: fromAvatar },
         video: !!inc.video,
         outgoing: false,
         status: 'connected',

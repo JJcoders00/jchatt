@@ -271,7 +271,12 @@ public class JChattSyncService extends Service {
 
     private void checkIncomingCalls(String uid) {
         try {
+            SharedPreferences prefs = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+            String token = prefs.getString("sync_token", null);
             String urlStr = "https://jjcodersjchatt-default-rtdb.firebaseio.com/v2/calls/" + uid + ".json";
+            if (token != null && !token.trim().isEmpty()) {
+                urlStr += "?auth=" + token.trim();
+            }
             URL url = new URL(urlStr);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
@@ -279,6 +284,11 @@ public class JChattSyncService extends Service {
             conn.setReadTimeout(4000);
 
             int code = conn.getResponseCode();
+            if (code == 401 || code == 403) {
+                conn.disconnect();
+                refreshTokenFromSavedCredentials();
+                return;
+            }
             if (code != 200) {
                 conn.disconnect();
                 return;

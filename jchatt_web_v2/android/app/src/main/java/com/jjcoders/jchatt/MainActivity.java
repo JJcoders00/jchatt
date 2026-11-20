@@ -108,7 +108,7 @@ public class MainActivity extends BridgeActivity {
                             if (token != null && !token.trim().isEmpty()) {
                                 ed.putString("sync_token", token.trim());
                             }
-                            ed.apply();
+                            ed.commit();
                             startSyncService();
                         }
                     }
@@ -116,14 +116,14 @@ public class MainActivity extends BridgeActivity {
                     @android.webkit.JavascriptInterface
                     public void clearSyncUser() {
                         SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
-                        p.edit().remove("sync_uid").remove("sync_token").apply();
+                        p.edit().remove("sync_uid").remove("sync_token").commit();
                     }
 
                     @android.webkit.JavascriptInterface
                     public void setSavedAccount(String json) {
                         if (json != null && !json.trim().isEmpty()) {
                             SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
-                            p.edit().putString("saved_account_json", json.trim()).apply();
+                            p.edit().putString("saved_account_json", json.trim()).commit();
                         }
                     }
 
@@ -136,7 +136,7 @@ public class MainActivity extends BridgeActivity {
                     @android.webkit.JavascriptInterface
                     public void clearSavedAccount() {
                         SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
-                        p.edit().remove("saved_account_json").apply();
+                        p.edit().remove("saved_account_json").commit();
                     }
 
                     @android.webkit.JavascriptInterface
@@ -146,7 +146,7 @@ public class MainActivity extends BridgeActivity {
                             p.edit()
                              .putString("disguise_mode", disguise != null ? disguise : "default")
                              .putString("notif_preset", notifPreset != null ? notifPreset : "default")
-                             .apply();
+                             .commit();
                         } catch (Exception ignored) {}
                     }
 
@@ -157,10 +157,14 @@ public class MainActivity extends BridgeActivity {
                                 PackageManager pm = getPackageManager();
                                 String pkg = getPackageName();
 
-                                ComponentName defComp = new ComponentName(pkg, pkg + ".MainActivity");
+                                ComponentName mainComp = new ComponentName(pkg, pkg + ".MainActivity");
+                                ComponentName defAliasComp = new ComponentName(pkg, pkg + ".MainActivityDefault");
                                 ComponentName calcComp = new ComponentName(pkg, pkg + ".MainActivityAliasCalc");
                                 ComponentName clockComp = new ComponentName(pkg, pkg + ".MainActivityAliasClock");
                                 ComponentName notesComp = new ComponentName(pkg, pkg + ".MainActivityAliasNotes");
+
+                                // MainActivity itself must always remain enabled
+                                pm.setComponentEnabledSetting(mainComp, PackageManager.COMPONENT_ENABLED_STATE_ENABLED, PackageManager.DONT_KILL_APP);
 
                                 int defState = PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
                                 int calcState = PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
@@ -180,7 +184,10 @@ public class MainActivity extends BridgeActivity {
                                 pm.setComponentEnabledSetting(calcComp, calcState, PackageManager.DONT_KILL_APP);
                                 pm.setComponentEnabledSetting(clockComp, clockState, PackageManager.DONT_KILL_APP);
                                 pm.setComponentEnabledSetting(notesComp, notesState, PackageManager.DONT_KILL_APP);
-                                pm.setComponentEnabledSetting(defComp, defState, PackageManager.DONT_KILL_APP);
+                                pm.setComponentEnabledSetting(defAliasComp, defState, PackageManager.DONT_KILL_APP);
+
+                                SharedPreferences p = getSharedPreferences("jchatt_prefs", Context.MODE_PRIVATE);
+                                p.edit().putString("disguise_mode", disguise != null ? disguise : "default").commit();
                             } catch (Exception ignored) {}
                         });
                     }
