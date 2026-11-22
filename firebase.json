@@ -5,7 +5,8 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "**/*.apk"
     ],
     "headers": [
       {
@@ -36,6 +37,23 @@
             "value": "max-age=31536000; includeSubDomains; preload"
           }
         ]
+      }
+    ],
+    "redirects": [
+      {
+        "source": "/downloads/jchatt-v2.0.apk",
+        "destination": "https://raw.githubusercontent.com/JJcoders00/jchatt/main/docs/Jchatt.apk",
+        "type": 302
+      },
+      {
+        "source": "/Jchatt.apk",
+        "destination": "https://raw.githubusercontent.com/JJcoders00/jchatt/main/docs/Jchatt.apk",
+        "type": 302
+      },
+      {
+        "source": "/app-debug.apk",
+        "destination": "https://raw.githubusercontent.com/JJcoders00/jchatt/main/docs/Jchatt.apk",
+        "type": 302
       }
     ],
     "rewrites": [
