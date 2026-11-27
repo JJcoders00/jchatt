@@ -1061,3 +1061,271 @@ h1, h2, h3, .hero-title, .hdr b {
   transform: translateY(-2px) scale(1.02);
 }
 
+/* ==========================================================================
+   LEGENDARY DUOLINGO ONBOARDING SYSTEM (TRUE-TO-SPEC CRAFT)
+   ========================================================================== */
+.duo-onboarding-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 16px 20px 24px;
+  background: #0b141a;
+  color: #fff;
+  position: relative;
+  overflow-y: auto;
+}
+.duo-top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.duo-bar-container {
+  flex: 1;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+.duo-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #78e024 0%, #58cc02 60%, #46a302 100%);
+  box-shadow: 0 0 16px rgba(88, 204, 2, 0.6);
+  position: relative;
+  transition: width 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.duo-bar-fill::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  right: 6px;
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.5);
+}
+.duo-mascot-speech-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 10px 0 22px;
+}
+.duo-mascot-box {
+  animation: duoMascotBounce 2.6s infinite ease-in-out;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.4));
+  flex: none;
+}
+@keyframes duoMascotBounce {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-7px) rotate(-1.5deg); }
+}
+.duo-bubble {
+  flex: 1;
+  background: #ffffff;
+  color: #10222b;
+  padding: 14px 16px;
+  border-radius: 20px;
+  position: relative;
+  box-shadow: 0 5px 0 #cfd8dc, 0 12px 28px rgba(0, 0, 0, 0.25);
+  font-size: 14.5px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.duo-bubble::before {
+  content: "";
+  position: absolute;
+  left: -10px;
+  top: 20px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 12px solid #ffffff;
+}
+.duo-option-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 0 rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: all 0.12s ease;
+  user-select: none;
+}
+.duo-option-card:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 rgba(255, 255, 255, 0.12);
+}
+.duo-option-card:active, .duo-option-card.selected {
+  background: rgba(88, 204, 2, 0.16);
+  border-color: #58cc02;
+  box-shadow: 0 4px 0 #3b8a00, 0 0 18px rgba(88, 204, 2, 0.3);
+  color: #fff;
+}
+.duo-check-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  margin-left: auto;
+  flex: none;
+}
+.duo-option-card.selected .duo-check-circle {
+  background: #58cc02;
+  border-color: #58cc02;
+  color: #fff;
+}
+.duo-btn-chunky-green {
+  width: 100%;
+  padding: 16px 20px;
+  background: #58cc02;
+  color: #ffffff !important;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 18px;
+  border: none;
+  box-shadow: 0 5px 0 #46a302, 0 10px 22px rgba(88, 204, 2, 0.35);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.08s ease;
+}
+.duo-btn-chunky-green:hover {
+  filter: brightness(1.06);
+}
+.duo-btn-chunky-green:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #46a302;
+}
+.duo-btn-chunky-ghost {
+  width: 100%;
+  padding: 14px 20px;
+  background: transparent;
+  color: #8292a4;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 3px 0 rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.08s ease;
+}
+.duo-btn-chunky-ghost:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ==========================================================================
+   AIRBNB FLOATING SEARCH BAR & MODAL
+   ========================================================================== */
+.airbnb-search-trigger {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 9px 18px;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin: 10px 14px 14px;
+}
+.airbnb-search-trigger:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.24);
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.airbnb-search-seg {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #fff;
+}
+.airbnb-search-seg.sub {
+  color: var(--mute);
+  font-weight: 400;
+}
+.airbnb-divider {
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* ==========================================================================
+   NOTION MODULAR DASHBOARD TOGGLES
+   ========================================================================== */
+.notion-page-header {
+  padding: 18px 20px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 14px;
+}
+.notion-icon-badge {
+  font-size: 30px;
+  margin-bottom: 6px;
+}
+.notion-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: #fff;
+}
+.notion-toggle-item {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: background 0.12s ease;
+}
+.notion-toggle-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.notion-toggle-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #e6edf3;
+  user-select: none;
+}
+.notion-toggle-caret {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-size: 10px;
+  color: var(--mute);
+}
+.notion-toggle-item.open .notion-toggle-caret {
+  transform: rotate(90deg);
+}
+.notion-toggle-content {
+  padding: 0 14px 14px 34px;
+  font-size: 12.5px;
+  color: var(--mute);
+  line-height: 1.55;
+  border-top: 1px dashed rgba(255, 255, 255, 0.06);
+  padding-top: 10px;
+}
+
+

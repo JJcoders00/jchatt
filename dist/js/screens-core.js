@@ -512,44 +512,98 @@
           + btn('Continue as ' + E(hName), 'ink', 'data-act="reconnect_saved"')
           + '</div>';
       }
-      return '<div class="scr ob">'
-        + '<div style="display:flex;justify-content:flex-end"><button style="color:var(--mute);font-weight:700" data-go="restore-account">Sign in</button></div>'
+      return '<div class="duo-onboarding-container">'
+        + '<div class="duo-top-nav">'
+        + '<div class="duo-bar-container"><div class="duo-bar-fill" style="width:25%"></div></div>'
+        + '<button style="color:var(--mute);font-weight:800;font-size:13px;letter-spacing:0.02em" data-go="restore-account">SIGN IN</button>'
+        + '</div>'
         + reconnectCard
-        + '<div class="ill">' + global.JCA.ILL.lock + '</div>'
-        + '<div class="dots"><i class="on"></i><i></i><i></i></div>'
-        + '<h2>Encrypted end-to-end across phones</h2>'
-        + '<p>Every chat, photo, voice note and call leaves your device sealed. No spam, no ads, zero telemetry.</p>'
-        + '<div style="display:grid;gap:8px">'
-        + btn('Next', '', 'data-go="welcome-2"')
-        + btn('I already have a private ID', 'ghost', 'data-go="restore-account"')
+        + '<div class="duo-mascot-speech-row">'
+        + '<div class="duo-mascot-box">' + global.JCA.mascot('wave', 92) + '</div>'
+        + '<div class="duo-bubble">Hi! I\'m your private security companion. What brings you to JChatt today?</div>'
+        + '</div>'
+        + '<div style="margin-bottom:16px">'
+        + '<div class="duo-option-card selected" onclick="this.classList.toggle(\'selected\')">'
+        + '<span style="font-size:22px">🛡️</span>'
+        + '<div style="flex:1"><b style="display:block;font-size:14px">Zero Phone Numbers</b><span style="font-size:12px;color:var(--mute)">No SIM card, zero telecom tracking</span></div>'
+        + '<div class="duo-check-circle">&#10003;</div>'
+        + '</div>'
+        + '<div class="duo-option-card selected" onclick="this.classList.toggle(\'selected\')">'
+        + '<span style="font-size:22px">🔐</span>'
+        + '<div style="flex:1"><b style="display:block;font-size:14px">AES-256 Military Encryption</b><span style="font-size:12px;color:var(--mute)">Double Ratchet forward secrecy</span></div>'
+        + '<div class="duo-check-circle">&#10003;</div>'
+        + '</div>'
+        + '<div class="duo-option-card" onclick="this.classList.toggle(\'selected\')">'
+        + '<span style="font-size:22px">🕵️</span>'
+        + '<div style="flex:1"><b style="display:block;font-size:14px">Anti-Coercion Calculator</b><span style="font-size:12px;color:var(--mute)">Stealth decoy vault protection</span></div>'
+        + '<div class="duo-check-circle">&#10003;</div>'
+        + '</div>'
+        + '</div>'
+        + '<div style="display:grid;gap:10px;margin-top:auto">'
+        + '<button class="duo-btn-chunky-green" data-go="welcome-2">CONTINUE</button>'
+        + '<button class="duo-btn-chunky-ghost" data-go="restore-account">I ALREADY HAVE AN ACCOUNT</button>'
         + '</div>'
         + '<div style="font-size:11px;color:var(--mute);text-align:center;margin-top:14px;line-height:1.5">'
-        + 'By continuing you accept the <button data-act="openlegal" data-v="terms" style="background:none;border:none;color:var(--ink);font-weight:700;text-decoration:underline;padding:0;cursor:pointer">Terms</button> & <button data-act="openlegal" data-v="privacy" style="background:none;border:none;color:var(--ink);font-weight:700;text-decoration:underline;padding:0;cursor:pointer">Privacy Policy</button>.'
+        + 'By continuing you accept the <button data-act="openlegal" data-v="terms" style="background:none;border:none;color:var(--lime);font-weight:700;text-decoration:underline;padding:0;cursor:pointer">Terms</button> & <button data-act="openlegal" data-v="privacy" style="background:none;border:none;color:var(--lime);font-weight:700;text-decoration:underline;padding:0;cursor:pointer">Privacy Policy</button>.'
         + '</div></div>';
     },
 
     'welcome-2': function () {
-      return '<div class="scr ob">'
-        + '<div style="display:flex;justify-content:space-between"><button style="color:var(--mute)" data-back="1">Back</button><button style="color:var(--mute);font-weight:700" data-go="restore-account">Sign in</button></div>'
-        + '<div class="ill">' + global.JCA.ILL.vanish + '</div>'
-        + '<div class="dots"><i></i><i class="on"></i><i></i></div>'
-        + '<h2>Disappear on your schedule</h2>'
-        + '<p>Arm 10-second vanishing timers, burn-after-reading bubbles, or view-once photos per conversation.</p>'
-        + '<div style="display:grid;gap:8px">'
-        + btn('Next', '', 'data-go="welcome-3"')
+      return '<div class="duo-onboarding-container">'
+        + '<div class="duo-top-nav">'
+        + '<button style="color:var(--mute)" data-back="1">' + I('back', 18) + '</button>'
+        + '<div class="duo-bar-container"><div class="duo-bar-fill" style="width:50%"></div></div>'
+        + '<button style="color:var(--mute);font-weight:800;font-size:13px;letter-spacing:0.02em" data-go="restore-account">SIGN IN</button>'
+        + '</div>'
+        + '<div class="duo-mascot-speech-row">'
+        + '<div class="duo-mascot-box">' + global.JCA.mascot('think', 92) + '</div>'
+        + '<div class="duo-bubble">Disappear on your own schedule. How do you prefer your confidential notes handled?</div>'
+        + '</div>'
+        + '<div style="margin-bottom:16px">'
+        + '<div class="duo-option-card selected" onclick="this.classList.toggle(\'selected\')">'
+        + '<span style="font-size:22px">⏱️</span>'
+        + '<div style="flex:1"><b style="display:block;font-size:14px">10-Second Vanishing Timers</b><span style="font-size:12px;color:var(--mute)">Automatic shredding across all devices</span></div>'
+        + '<div class="duo-check-circle">&#10003;</div>'
+        + '</div>'
+        + '<div class="duo-option-card selected" onclick="this.classList.toggle(\'selected\')">'
+        + '<span style="font-size:22px">👁️</span>'
+        + '<div style="flex:1"><b style="display:block;font-size:14px">View-Once Media Vault</b><span style="font-size:12px;color:var(--mute)">Decrypted in RAM, never saved to disk</span></div>'
+        + '<div class="duo-check-circle">&#10003;</div>'
+        + '</div>'
+        + '<div class="duo-option-card" onclick="this.classList.toggle(\'selected\')">'
+        + '<span style="font-size:22px">🔥</span>'
+        + '<div style="flex:1"><b style="display:block;font-size:14px">Burn on Read</b><span style="font-size:12px;color:var(--mute)">Immediate erasure upon recipient open</span></div>'
+        + '<div class="duo-check-circle">&#10003;</div>'
+        + '</div>'
+        + '</div>'
+        + '<div style="display:grid;gap:10px;margin-top:auto">'
+        + '<button class="duo-btn-chunky-green" data-go="welcome-3">CONTINUE</button>'
         + '</div></div>';
     },
 
     'welcome-3': function () {
-      return '<div class="scr ob">'
-        + '<div style="display:flex;justify-content:space-between"><button style="color:var(--mute)" data-back="1">Back</button><span></span></div>'
-        + '<div class="ill">' + global.JCA.ILL.masks + '</div>'
-        + '<div class="dots"><i></i><i></i><i class="on"></i></div>'
-        + '<h2>No phone number required</h2>'
-        + '<p>Claim a private @handle, disguise JChatt as a calculator with one tap, and set a Duress PIN.</p>'
-        + '<div style="display:grid;gap:8px">'
-        + btn('Create my private ID', '', 'data-go="create-id"')
-        + btn('Restore existing ID or link device', 'ink', 'data-go="restore-account"')
+      return '<div class="duo-onboarding-container">'
+        + '<div class="duo-top-nav">'
+        + '<button style="color:var(--mute)" data-back="1">' + I('back', 18) + '</button>'
+        + '<div class="duo-bar-container"><div class="duo-bar-fill" style="width:75%"></div></div>'
+        + '<span></span>'
+        + '</div>'
+        + '<div class="duo-mascot-speech-row">'
+        + '<div class="duo-mascot-box">' + global.JCA.mascot('secret', 92) + '</div>'
+        + '<div class="duo-bubble">Awesome! Your sovereign key will be generated locally right now. No servers, no phone numbers. Ready?</div>'
+        + '</div>'
+        + '<div style="margin-bottom:16px">'
+        + '<div class="card" style="background:rgba(88,204,2,0.1);border:1.5px solid #58cc02;padding:16px;border-radius:18px">'
+        + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">'
+        + '<span style="font-size:20px">✨</span>'
+        + '<b style="color:#58cc02;font-size:14px">100% Client-Side Identity</b>'
+        + '</div>'
+        + '<p style="font-size:13px;color:#d0d6e0;line-height:1.5;margin:0">A unique 12-word recovery phrase is derived on your hardware using BIP-39 mnemonic entropy. Nobody else can ever revoke or freeze your account.</p>'
+        + '</div>'
+        + '</div>'
+        + '<div style="display:grid;gap:10px;margin-top:auto">'
+        + '<button class="duo-btn-chunky-green" data-go="create-id">CREATE MY PRIVATE ID</button>'
+        + '<button class="duo-btn-chunky-ghost" data-go="restore-account">RESTORE AN EXISTING ID</button>'
         + '</div></div>';
     },
 
@@ -641,41 +695,63 @@
     'recovery-phrase': function () {
       var words = (LV.settings.phrase && LV.settings.phrase.length) ? LV.settings.phrase : global.JCA.generatePhrase();
       LV.settings.phrase = words;
-      return '<div class="scr">'
-        + hdr('Recovery phrase', 'Your only key to restore @ID', backBtn('secure-device'), '')
-        + '<div class="body pad nonav">'
-        + duoProgressBar('Step 3 of 4: Master Seed Backup', 75)
-        + '<p style="font-size:13px;color:var(--mute);margin-bottom:12px">Write these 12 words down offline. JChatt has no password reset email — these words + your @ID restore your account on any phone worldwide.</p>'
-        + '<div class="sn" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">'
-        + words.map(function (w, i) { return '<div style="background:#fff;color:var(--ink);padding:7px;border-radius:10px;font-weight:700"><span style="opacity:.45;margin-right:4px">' + (i + 1) + '.</span>' + E(w) + '</div>'; }).join('')
+      return '<div class="duo-onboarding-container">'
+        + '<div class="duo-top-nav">'
+        + '<button style="color:var(--mute)" data-back="1">' + I('back', 18) + '</button>'
+        + '<div class="duo-bar-container"><div class="duo-bar-fill" style="width:75%"></div></div>'
+        + '<span style="font-size:12px;font-weight:800;color:var(--lime)">STEP 3/4</span>'
         + '</div>'
-        + '<div style="display:grid;gap:8px">'
-        + btn(I('copy', 17) + ' Copy phrase safely', 'ink', 'data-act="copyphrase"')
-        + btn('I wrote it down -> Continue', '', 'data-act="backedup"')
-        + '</div></div></div>';
+        + '<div class="duo-mascot-speech-row">'
+        + '<div class="duo-mascot-box">' + global.JCA.mascot('celebrate', 92) + '</div>'
+        + '<div class="duo-bubble">Write these 12 words down offline! JChatt has no password reset email — this is your master titanium key.</div>'
+        + '</div>'
+        + '<div class="sn" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">'
+        + words.map(function (w, i) { return '<div style="background:rgba(255,255,255,0.08);color:#fff;border:1.5px solid rgba(255,255,255,0.15);padding:10px 8px;border-radius:12px;font-weight:700;font-size:13px;text-align:center"><span style="color:var(--lime);margin-right:4px">' + (i + 1) + '.</span>' + E(w) + '</div>'; }).join('')
+        + '</div>'
+        + '<div style="display:grid;gap:10px;margin-top:auto">'
+        + '<button class="duo-btn-chunky-ghost" data-act="copyphrase">' + I('copy', 16) + ' COPY PHRASE SAFELY</button>'
+        + '<button class="duo-btn-chunky-green" data-act="backedup">I WROTE IT DOWN · CONTINUE</button>'
+        + '</div></div>';
     },
 
     'permissions': function () {
-      return '<div class="scr">'
-        + hdr('Almost ready', 'Optional permissions', backBtn('recovery-phrase'), '')
-        + '<div class="body pad nonav">'
-        + duoProgressBar('Step 4 of 4: Final Permissions', 100)
-        + '<div class="card">'
-        + row(ico('bell', 'lime'), 'Message notifications', 'Show disguised preview on incoming messages', '', 'data-act="reqnotif"')
-        + row(ico('mic', 'ink'), 'Microphone & camera', 'Only used during voice notes, calls & QR scans', '', 'data-act="reqmedia"')
+      return '<div class="duo-onboarding-container">'
+        + '<div class="duo-top-nav">'
+        + '<button style="color:var(--mute)" data-back="1">' + I('back', 18) + '</button>'
+        + '<div class="duo-bar-container"><div class="duo-bar-fill" style="width:100%"></div></div>'
+        + '<span style="font-size:12px;font-weight:800;color:var(--lime)">STEP 4/4</span>'
         + '</div>'
-        + btn('Finish setup', '', 'data-go="account-ready"')
+        + '<div class="duo-mascot-speech-row">'
+        + '<div class="duo-mascot-box">' + global.JCA.mascot('happy', 92) + '</div>'
+        + '<div class="duo-bubble">Almost done! Grant optional alerts so you never miss an encrypted message or private call.</div>'
+        + '</div>'
+        + '<div style="margin-bottom:16px">'
+        + '<div class="duo-option-card" data-act="reqnotif">'
+        + '<span style="font-size:22px">🔔</span>'
+        + '<div style="flex:1"><b style="display:block;font-size:14px">Disguised Notifications</b><span style="font-size:12px;color:var(--mute)">Private previews without leaking content</span></div>'
+        + '<div class="duo-check-circle">&#10003;</div>'
+        + '</div>'
+        + '<div class="duo-option-card" data-act="reqmedia">'
+        + '<span style="font-size:22px">🎙️</span>'
+        + '<div style="flex:1"><b style="display:block;font-size:14px">Microphone & Camera</b><span style="font-size:12px;color:var(--mute)">Peer-to-peer audio/video calls only</span></div>'
+        + '<div class="duo-check-circle">&#10003;</div>'
+        + '</div>'
+        + '</div>'
+        + '<div style="margin-top:auto">'
+        + '<button class="duo-btn-chunky-green" data-go="account-ready">FINISH SETUP</button>'
         + '</div></div>';
     },
 
     'account-ready': function () {
       var me = global.JFE.me || {};
-      return '<div class="scr ob" style="justify-content:center;gap:14px">'
-        + '<div style="display:grid;place-items:center">' + global.JCA.ILL.verified + '</div>'
-        + '<h2>You are live on JChatt</h2>'
-        + '<p style="margin:0">Your private handle is <b>' + E(me.handle || '@user') + '</b>. Zero demo contacts — share your link or search any friend by @ID.</p>'
-        + btn('Open my inbox', '', 'data-act="enterapp"')
-        + '</div>';
+      return '<div class="duo-onboarding-container" style="justify-content:center;align-items:center;text-align:center">'
+        + '<div class="duo-mascot-box" style="margin-bottom:18px">' + global.JCA.mascot('celebrate', 130) + '</div>'
+        + '<div class="pill" style="background:rgba(88,204,2,0.18);border:1.5px solid #58cc02;color:#58cc02;font-weight:800;margin-bottom:12px">TITANIUM SECURITY UNLOCKED</div>'
+        + '<h2 style="font-size:24px;font-weight:800;margin-bottom:8px">You Are Fully Sovereign!</h2>'
+        + '<p style="font-size:14px;color:var(--mute);max-width:320px;margin-bottom:24px">Your private handle is <b style="color:#fff">' + E(me.handle || '@user') + '</b>. Zero tracking, zero phone numbers, total privacy.</p>'
+        + '<div style="width:100%;max-width:340px">'
+        + '<button class="duo-btn-chunky-green" data-act="enterapp">LAUNCH MY INBOX 🚀</button>'
+        + '</div></div>';
     },
 
     // --- Tab 1: Chats ---
@@ -753,6 +829,14 @@
         )
         + statusBanner
         + notifBanner
+        + '<div class="airbnb-search-trigger" data-act="open_cmd_palette">'
+        + '<span style="color:#00a884;display:flex">' + I('search', 16) + '</span>'
+        + '<span class="airbnb-search-seg">Search Messages</span>'
+        + '<span class="airbnb-divider"></span>'
+        + '<span class="airbnb-search-seg sub">Media & Files</span>'
+        + '<span class="airbnb-divider"></span>'
+        + '<span class="airbnb-search-seg sub"><kbd class="linear-kbd">⌘K</kbd></span>'
+        + '</div>'
         + '<div class="chips">'
         + chip('all', 'All', LV.filter === 'all')
         + chip('unread', 'Unread', LV.filter === 'unread')
