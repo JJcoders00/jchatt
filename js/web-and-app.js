@@ -447,6 +447,49 @@
 
   // --- Action Dispatcher ---
   var ACT = {
+    set_search_filter: function (el) {
+      LV.searchFilter = el.getAttribute('data-v') || 'all';
+      render();
+    },
+    open_cmd_palette: function () {
+      LV.cmdQ = '';
+      if (isDesktopShellRoute()) {
+        LV.wmodal = 'cmd-palette';
+        render();
+      } else {
+        go('cmd-palette', 'push');
+      }
+    },
+    go_chats: function () {
+      LV.wmodal = null;
+      go('chats', 'pop');
+    },
+    go_calls: function () {
+      LV.wmodal = null;
+      go('calls', 'tab');
+    },
+    go_settings: function () {
+      LV.wmodal = null;
+      go('settings', 'tab');
+    },
+    new_chat_prompt: function () {
+      LV.wmodal = null;
+      go('new-chat', 'push');
+    },
+    open_qr: function () {
+      LV.wmodal = null;
+      go('qr', 'push');
+    },
+    open_stealth: function () {
+      LV.wmodal = null;
+      go('disguise', 'push');
+    },
+    toggle_theme: function () {
+      LV.settings.darkMode = !LV.settings.darkMode;
+      LV.save();
+      render();
+      toast('Theme switched to ' + (LV.settings.darkMode ? 'Dark' : 'Light'));
+    },
     reconnect_saved: function () {
       var exAcc = null;
       try {
@@ -1546,6 +1589,9 @@
         clearTimeout(typingTimeout);
         typingTimeout = setTimeout(function () { JFE.setTyping(LV.curChatId, false); }, 2500);
       }
+    } else if (t.id === 'cmd-input') {
+      LV.cmdQ = t.value;
+      render();
     } else if (t.id === 'glob-search') {
       LV.searchQ = t.value;
       render();
@@ -1584,14 +1630,14 @@
       ACT.lookupid();
     } else if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'k') {
       ev.preventDefault();
-      if (isDesktopShellRoute()) { LV.wmodal = 'search'; render(); }
-      else if (JFE.uid) go('search', 'push');
+      ACT.open_cmd_palette();
     } else if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'n') {
       ev.preventDefault();
       if (isDesktopShellRoute()) { LV.wmodal = 'add-contact'; render(); }
       else if (JFE.uid) go('add-contact', 'push');
     } else if (ev.key === 'Escape') {
       if (LV.wmodal) { LV.wmodal = null; render(); }
+      else if (LV.route === 'cmd-palette') { go('chats', 'pop'); }
     }
   });
 

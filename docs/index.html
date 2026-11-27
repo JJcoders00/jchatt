@@ -1,0 +1,1220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- JChatt Native Shell Detection -->
+  <script>
+    (function() {
+      function detectNative() {
+        try {
+          if ((window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || 
+              window.location.search.indexOf('native=1') !== -1 ||
+              window.location.search.indexOf('app=1') !== -1) {
+            window.location.replace('./web.html');
+          }
+        } catch (e) {}
+      }
+      detectNative();
+      document.addEventListener('DOMContentLoaded', detectNative);
+    })();
+  </script>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>JChatt · Private Messenger, No Phone Number Required</title>
+  <meta name="description" content="JChatt is a next-generation private messenger. Zero phone numbers, zero tracking, and zero corporate telemetry. Secured with client-side AES-256-GCM and 12-word cryptographic seed phrases.">
+  <meta name="theme-color" content="#070a0e">
+  <meta property="og:title" content="JChatt · Private Messenger, No Phone Number">
+  <meta property="og:description" content="End-to-end encrypted chats and phone-to-phone calls with zero phone numbers and anti-coercion vault protection.">
+  <meta property="og:image" content="./images/mockups/promo_banner_1024x500.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="JChatt | Sovereign End-to-End Encrypted Private Messenger">
+    <meta name="twitter:description" content="No phone numbers. No SIM cards. Zero metadata retention. BIP-39 mnemonic identity with direct peer-to-peer encryption.">
+    <meta name="twitter:image" content="./images/mockups/promo_banner_1024x500.png">
+
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070a0e;
+      --surface: #0d1218;
+      --surface-card: #111720;
+      --surface-elevated: #16202c;
+      --surface-hover: #1c2938;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(0, 168, 132, 0.3);
+      --emerald: #00a884;
+      --emerald-glow: rgba(0, 168, 132, 0.25);
+      --lime: #10b981;
+      --gold: #f59e0b;
+      --gold-glow: rgba(245, 158, 11, 0.2);
+      --cyan: #06b6d4;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-sub: #8292a4;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Ambient Background Glow */
+    .ambient-glow {
+      position: fixed;
+      top: -20vw;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90vw;
+      height: 50vw;
+      background: radial-gradient(circle, rgba(0, 168, 132, 0.12) 0%, rgba(6, 182, 212, 0.04) 40%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Header Nav */
+    header.site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(7, 10, 14, 0.82);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: max(16px, env(safe-area-inset-top)) 24px 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-logo-img {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 1px solid var(--border-accent);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14.5px;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--text-main);
+    }
+
+    .nav-badge-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--gold) !important;
+      font-weight: 600 !important;
+      background: rgba(245, 158, 11, 0.08);
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+
+    .nav-badge-link:hover {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24 !important;
+    }
+
+    .nav-cta-btn {
+      background: var(--emerald);
+      color: #070a0e !important;
+      padding: 9px 20px;
+      border-radius: 999px;
+      font-weight: 700 !important;
+      font-size: 14px !important;
+      transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 4px 14px var(--emerald-glow);
+    }
+
+    .nav-cta-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 168, 132, 0.45);
+    }
+
+    /* Main Layout */
+    main {
+      flex: 1;
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 80px 24px;
+    }
+
+    /* Hero Section */
+    .hero-section {
+      padding: 90px 24px 60px;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 50px;
+      align-items: center;
+    }
+
+    .hero-content {
+      max-width: 620px;
+    }
+
+    .pill-announcement {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: rgba(0, 168, 132, 0.1);
+      border: 1px solid rgba(0, 168, 132, 0.25);
+      color: var(--emerald);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      margin-bottom: 24px;
+    }
+
+    .pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
+    }
+
+    .hero-title {
+      font-size: clamp(38px, 4.8vw, 56px);
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+      margin-bottom: 22px;
+      background: linear-gradient(180deg, #ffffff 40%, #94a3b8 100%);
+      -webkit-background-clip: text;
+    background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+      color: var(--text-muted);
+      line-height: 1.65;
+      margin-bottom: 34px;
+    }
+
+    .hero-cta-group {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+    }
+
+    .btn-main {
+      background: var(--emerald);
+      color: #070a0e;
+      padding: 14px 30px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 15.5px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 6px 22px var(--emerald-glow);
+    }
+
+    .btn-main:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0, 168, 132, 0.5);
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.05);
+      color: #ffffff;
+      border: 1px solid var(--border);
+      padding: 14px 28px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 15.5px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .hero-guarantees {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+
+    .guarantee-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .guarantee-item svg {
+      width: 16px;
+      height: 16px;
+      fill: var(--emerald);
+    }
+
+    /* Hero Visual Showcase */
+    .hero-mockup-frame {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .mockup-phone {
+      width: 100%;
+      max-width: 380px;
+      border-radius: 36px;
+      padding: 10px;
+      background: #111822;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 168, 132, 0.15);
+      overflow: hidden;
+      transition: transform 0.4s ease;
+    }
+
+    .mockup-phone:hover {
+      transform: translateY(-6px);
+    }
+
+    .mockup-screen-img {
+      width: 100%;
+      height: auto;
+      border-radius: 28px;
+      display: block;
+    }
+
+    /* Trust / Metric Bar */
+    .metric-bar {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: rgba(13, 18, 24, 0.6);
+      padding: 34px 24px;
+    }
+
+    .metric-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 28px;
+      text-align: center;
+    }
+
+    .metric-stat {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+      margin-bottom: 4px;
+      font-family: var(--font-mono);
+    }
+
+    .metric-stat.accent {
+      color: var(--emerald);
+    }
+
+    .metric-label {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Bento Grid Section */
+    .section-header {
+      text-align: center;
+      max-width: 680px;
+      margin: 0 auto 56px;
+    }
+
+    .section-kicker {
+      font-size: 12.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--emerald);
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: clamp(30px, 3.8vw, 42px);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      color: #ffffff;
+      margin-bottom: 16px;
+    }
+
+    .section-desc {
+      font-size: 16.5px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .bento-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 34px 28px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    
+    .bento-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+      opacity: 0.6;
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+    .bento-card:hover::before {
+      background: linear-gradient(90deg, transparent, var(--emerald), transparent);
+      opacity: 1;
+    }
+
+    .bento-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.16);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+    }
+
+    .bento-card.span-2 {
+      grid-column: span 2;
+    }
+
+    .bento-card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(0, 168, 132, 0.12);
+      border: 1px solid rgba(0, 168, 132, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 22px;
+      color: var(--emerald);
+    }
+
+    .bento-card-icon svg {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
+
+    .bento-card h3 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+      color: #ffffff;
+    }
+
+    .bento-card p {
+      font-size: 14.5px;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    .bento-card-badge {
+      display: inline-block;
+      margin-top: auto;
+      padding-top: 18px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: var(--emerald);
+    }
+
+    /* Honors Callout Banner */
+    .honors-banner {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(0, 168, 132, 0.08) 100%), var(--surface-card);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      border-radius: var(--radius-xl);
+      padding: 44px 38px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 32px;
+      align-items: center;
+      margin: 20px 0 60px;
+    }
+
+    .honors-text h3 {
+      font-size: 24px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .honors-text p {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 650px;
+    }
+
+    .honors-avatars {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .mini-honoree {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 6px 14px 6px 6px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+
+    .mini-honoree img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .mini-honoree span {
+      font-size: 13px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    .btn-gold {
+      background: var(--gold);
+      color: #070a0e;
+      padding: 13px 26px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 14.5px;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 4px 16px var(--gold-glow);
+    }
+
+    .btn-gold:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 22px rgba(245, 158, 11, 0.4);
+    }
+
+    /* Comparison Table Section */
+    .table-container {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow-x: auto;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    table.comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 14.5px;
+    }
+
+    .comparison-table th, .comparison-table td {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .comparison-table th {
+      font-weight: 700;
+      color: var(--text-main);
+      background: var(--surface-elevated);
+      font-size: 14px;
+    }
+
+    .comparison-table th.highlight-col, .comparison-table td.highlight-col {
+      background: rgba(0, 168, 132, 0.06);
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .badge-check {
+      color: var(--emerald);
+      font-weight: 700;
+    }
+
+    .badge-cross {
+      color: #ef4444;
+      font-weight: 600;
+    }
+
+    /* FAQ Section */
+    .faq-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+      gap: 20px;
+    }
+
+    .faq-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+    }
+
+    .faq-card h3 {
+      font-size: 16.5px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .faq-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Bottom Final Callout */
+    .bottom-cta {
+      background: radial-gradient(circle at bottom center, rgba(0, 168, 132, 0.16), transparent 70%), var(--surface-card);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius-xl);
+      padding: 60px 32px;
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .bottom-cta h2 {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.025em;
+      margin-bottom: 14px;
+    }
+
+    .bottom-cta p {
+      color: var(--text-muted);
+      font-size: 16px;
+      max-width: 580px;
+      margin: 0 auto 32px;
+    }
+
+    /* Footer */
+    footer.site-footer {
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      padding: 56px 24px 36px;
+      margin-top: 80px;
+    }
+
+    .footer-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+    }
+
+    .footer-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 26px;
+      flex-wrap: wrap;
+      list-style: none;
+    }
+
+    .footer-links a {
+      display: inline-block;
+      padding: 6px 4px;
+      min-height: 36px;
+      color: var(--text-sub);
+      text-decoration: none;
+      font-size: 13.5px;
+      transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--text-main);
+    }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    @media (max-width: 900px) {
+      .hero-section {
+        grid-template-columns: 1fr;
+        text-align: center;
+        padding-top: 50px;
+      }
+      .hero-content {
+        margin: 0 auto;
+      }
+      .hero-cta-group {
+        justify-content: center;
+      }
+      .hero-guarantees {
+        justify-content: center;
+      }
+      .bento-grid {
+        grid-template-columns: 1fr;
+      }
+      .bento-card.span-2 {
+        grid-column: span 1;
+      }
+      .honors-banner {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .honors-avatars {
+        justify-content: center;
+      }
+      .faq-grid {
+        grid-template-columns: 1fr;
+      }
+      .nav-links {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div class="ambient-glow" aria-hidden="true"></div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <nav class="nav-container" aria-label="Main Navigation">
+      <a href="./index.html" class="brand-link">
+        <img src="./images/logo1.png" alt="JChatt Icon" class="brand-logo-img">
+        <span>JChatt</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#security">Security</a></li>
+        <li><a href="./whitepaper.html">Whitepaper</a>
+        <a href="https://github.com/JJcoders00/jchatt" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        <li><a href="./honors.html" class="nav-badge-link">★ Honors</a></li>
+        <li><a href="./compliance.html">Compliance</a></li>
+        <li><a href="./downloads/jchatt-v2.0.apk">Download APK</a></li>
+        <li><a href="./web.html" class="nav-cta-btn">Open Messenger</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main-content">
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-content">
+        <div class="pill-announcement">
+          <span class="pill-dot"></span>
+          Zero Phone Numbers · 100% Client Encrypted
+        </div>
+        <h1 class="hero-title">Private Messaging That Never Asks For Your Phone Number.</h1>
+        <p class="hero-subtitle">
+          JChatt replaces SIM cards and telecom tracking with self-sovereign 12-word cryptographic seed phrases. Armed with AES-256-GCM encryption, peer-to-peer calling, and anti-coercion stealth vaults.
+        </p>
+        <div class="hero-cta-group">
+          <a href="./web.html" class="btn-main">
+            Launch Web Messenger
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a href="./downloads/jchatt-v2.0.apk" class="btn-outline">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-1.0003s.4482-1.0003.9993-1.0003c.5516 0 .9998.4486.9998 1.0003s-.4482 1.0003-.9998 1.0003m-11.046 0c-.5511 0-.9993-.4486-.9993-1.0003s.4482-1.0003.9993-1.0003c.5516 0 .9998.4486.9998 1.0003s-.4482 1.0003-.9998 1.0003m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.4126 13.8563 8.125 12 8.125c-1.8563 0-3.5902.2876-5.1368.8247L4.8409 5.4467a.4161.4161 0 00-.5677-.1521.4157.4157 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.75h24c-.3432-4.0911-2.6889-7.5633-6.1185-9.4286"/></svg>
+            Download Android APK (Free)
+          </a>
+        </div>
+        <div class="hero-guarantees">
+          <div class="guarantee-item">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            <span>No SIM Card</span>
+          </div>
+          <div class="guarantee-item">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            <span>No Telemetry</span>
+          </div>
+          <div class="guarantee-item">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            <span>Open & Free</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hero Visual Device Mockup -->
+      <div class="hero-mockup-frame">
+        <div class="mockup-phone">
+          <img src="./images/mockups/screenshot_4_inbox.png" alt="JChatt Encrypted Inbox Interface" class="mockup-screen-img">
+        </div>
+      </div>
+    </section>
+
+    <!-- Trust / Metric Bar -->
+    <section class="metric-bar">
+      <div class="metric-grid">
+        <div>
+          <div class="metric-stat accent">0</div>
+          <div class="metric-label">Phone Numbers Required</div>
+        </div>
+        <div>
+          <div class="metric-stat">256-bit</div>
+          <div class="metric-label">AES-GCM Authenticated Encryption</div>
+        </div>
+        <div>
+          <div class="metric-stat accent">12 Words</div>
+          <div class="metric-label">BIP-39 Sovereign Identity</div>
+        </div>
+        <div>
+          <div class="metric-stat">0%</div>
+          <div class="metric-label">Trackers, Ads, or Corporate Analytics</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bento Grid of Innovations -->
+    <section class="section-wrap" id="features">
+      <div class="section-header">
+        <div class="section-kicker">Architectural Breakthroughs</div>
+        <h2 class="section-title">Engineered For Sovereign Freedom</h2>
+        <p class="section-desc">Every layer of JChatt was designed from the ground up to eliminate central choke points and surveillance vectors.</p>
+      </div>
+
+      <div class="bento-grid">
+        <!-- Item 1: Zero Phone Numbers (Span 2) -->
+        <div class="bento-card span-2">
+          <div class="bento-card-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+          </div>
+          <h3>Zero-Phone-Number Identity</h3>
+          <p>
+            Mainstream apps claim to be private while immediately forcing you to bind your state-registered SIM card and uploading your entire phone address book. JChatt generates a 12-word cryptographic seed phrase locally in your browser or phone. You are in complete control.
+          </p>
+          <span class="bento-card-badge">BIP-39 Mnemonic · Zero-KYC</span>
+        </div>
+
+        <!-- Item 2: Anti-Coercion Decoy -->
+        <div class="bento-card">
+          <div class="bento-card-icon">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          </div>
+          <h3>Anti-Coercion Calculator</h3>
+          <p>
+            Under duress, JChatt morphs into a real scientific calculator. Entering your secret panic PIN hides all sensitive chats or displays an innocuous decoy vault.
+          </p>
+          <span class="bento-card-badge">Stealth Mode · 314159= Vault</span>
+        </div>
+
+        <!-- Item 3: Direct P2P Calling -->
+        <div class="bento-card">
+          <div class="bento-card-icon">
+            <svg viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.02.24l-2.2 2.2c-2.83-1.44-5.15-3.75-6.59-6.59l2.2-2.21c.28-.26.36-.65.25-1C8.76 6.35 8.56 5.16 8.56 3.93 8.56 3.42 8.14 3 7.63 3H4.07C3.56 3 3 3.42 3 3.93c0 9.39 7.63 17.02 17.02 17.02.51 0 .98-.56.98-1.07v-3.52c0-.51-.42-.98-.99-.98z"/></svg>
+          </div>
+          <h3>Direct P2P Encrypted Calls</h3>
+          <p>
+            Crystal-clear voice and video calling routed directly between peer devices over encrypted WebRTC DTLS-SRTP channels with zero intermediary audio tap capability.
+          </p>
+          <span class="bento-card-badge">WebRTC DTLS-SRTP · Peer-to-Peer</span>
+        </div>
+
+        <!-- Item 4: Hardware Biometric Enclave (Span 2) -->
+        <div class="bento-card span-2">
+          <div class="bento-card-icon">
+            <svg viewBox="0 0 24 24"><path d="M17.81 4.47c-.08 0-.16-.02-.23-.06C15.66 3.42 14 3 12.01 3c-1.98 0-3.86.47-5.57 1.41-.24.13-.54.04-.68-.2-.13-.24-.04-.55.2-.68C7.82 2.52 9.86 2 12.01 2c2.13 0 3.99.47 6.03 1.52.25.13.34.43.21.67-.09.18-.26.28-.44.28zM3.5 9.72c-.1 0-.2-.03-.29-.09-.23-.16-.28-.47-.12-.7.99-1.4 2.25-2.5 3.75-3.27.24-.12.54-.03.67.21.12.24.03.54-.21.67-1.39.72-2.56 1.73-3.49 3.03-.08.1-.19.15-.31.15z"/></svg>
+          </div>
+          <h3>Hardware Biometric Vault Isolation</h3>
+          <p>
+            Protected by Android Keystore and WebAuthn hardware biometric authentication. Your private keys never touch cleartext storage and are erased on repeated unauthorized access attempts.
+          </p>
+          <span class="bento-card-badge">Android Keystore · WebAuthn</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Special Honors & Recognition Banner -->
+    <section class="section-wrap" style="padding-top: 0;">
+      <div class="honors-banner">
+        <div class="honors-text">
+          <div style="color: var(--gold); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+            ★ Special Recognition & Dedication
+          </div>
+          <h3>Honoring the Privacy Pioneers Behind JChatt</h3>
+          <p>
+            JChatt was shaped by passionate individuals who dared to demand true digital freedom. We proudly honor <strong>Sree Vinayak K. Praveen</strong> (Founding Ideator) and <strong>Jackson Wright</strong> (Lead Engineering & Design).
+          </p>
+          <div class="honors-avatars">
+            <div class="mini-honoree">
+              <img src="./images/honors/sree_vinayak.jpg" alt="Sree Vinayak">
+              <span>Sree Vinayak K. Praveen</span>
+            </div>
+            <div class="mini-honoree">
+              <img src="./images/honors/jackson_wright.jpg" alt="Jackson Wright">
+              <span>Jackson Wright</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <a href="./honors.html" class="btn-gold">Explore Hall of Honors →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Comparison Table -->
+    <section class="section-wrap" id="security" style="padding-top: 20px;">
+      <div class="section-header">
+        <div class="section-kicker">Truth in Privacy</div>
+        <h2 class="section-title">How JChatt Compares to Mainstream Apps</h2>
+        <p class="section-desc">A transparent look at the architectural differences between JChatt and traditional messaging networks.</p>
+      </div>
+
+      <div class="mobile-scroll-hint"><span>← Swipe horizontally to compare all apps →</span></div>
+        <div class="table-container">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th scope="col">Privacy Parameter</th>
+              <th class="highlight-col">JChatt</th>
+              <th scope="col">Signal</th>
+              <th scope="col">Telegram</th>
+              <th scope="col">WhatsApp</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+            <th scope="row"><strong>Requires Phone Number / SIM</strong></th>
+              <td class="highlight-col"><span class="badge-check">NO (Zero Phone Number)</span></td>
+              <td><span class="badge-cross">Yes (Mandatory)</span></td>
+              <td><span class="badge-cross">Yes (Mandatory)</span></td>
+              <td><span class="badge-cross">Yes (Mandatory)</span></td>
+            </tr>
+            <tr>
+            <th scope="row"><strong>Identity Standard</strong></th>
+              <td class="highlight-col"><span class="badge-check">12-Word BIP-39 Seed</span></td>
+              <td>Phone SMS Verification</td>
+              <td>Phone SMS Verification</td>
+              <td>Phone SMS Verification</td>
+            </tr>
+            <tr>
+            <th scope="row"><strong>Client-Side AES-256-GCM</strong></th>
+              <td class="highlight-col"><span class="badge-check">Enforced for 100% of Chats</span></td>
+              <td>Enforced</td>
+              <td>Secret Chats Only</td>
+              <td>Proprietary Closed</td>
+            </tr>
+            <tr>
+            <th scope="row"><strong>Anti-Coercion Calculator Disguise</strong></th>
+              <td class="highlight-col"><span class="badge-check">Built-in (314159=)</span></td>
+              <td><span class="badge-cross">No</span></td>
+              <td><span class="badge-cross">No</span></td>
+              <td><span class="badge-cross">No</span></td>
+            </tr>
+            <tr>
+            <th scope="row"><strong>Corporate Analytics & Trackers</strong></th>
+              <td class="highlight-col"><span class="badge-check">0 Trackers</span></td>
+              <td>Minimal</td>
+              <td>Moderate</td>
+              <td><span class="badge-cross">Heavy (Meta Graph)</span></td>
+            </tr>
+            <tr>
+            <th scope="row"><strong>Hardware Biometric Vault</strong></th>
+              <td class="highlight-col"><span class="badge-check">Native Hardware Enclave</span></td>
+              <td>Optional Screen Lock</td>
+              <td>Optional Passcode</td>
+              <td>Optional Fingerprint</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 10 Master Design Disciplines Section -->
+    <section class="section-wrap" id="design-standards">
+      <div class="section-header">
+        <div class="section-kicker">Design Excellence</div>
+        <h2 class="section-title">Forged with 10 World-Class Design Disciplines</h2>
+        <p class="section-desc">We benchmarked every pixel, interaction, and transition against the undisputed industry standards of craft.</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 24px;">
+        <div class="stripe-glow-card" style="padding: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--emerald);">01 · Animations</span>
+            <span style="font-size: 13px; font-weight: 700; color: #fff;">Apple</span>
+          </div>
+          <h3 style="font-size: 17px; margin-bottom: 8px;">Fluid Spring Physics</h3>
+          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
+            Dynamic cubic-bezier spring curves, fluid sheet dismissals, and tactile micro-scale haptic responses that mirror physical momentum.
+          </p>
+        </div>
+
+        <div class="stripe-glow-card" style="padding: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--lime);">02 · Onboarding</span>
+            <span style="font-size: 13px; font-weight: 700; color: #fff;">Duolingo</span>
+          </div>
+          <h3 style="font-size: 17px; margin-bottom: 8px;">Gamified Progression</h3>
+          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
+            Zero-friction milestone progress bars, interactive seed phrase confirmation challenges, and instant celebratory feedback.
+          </p>
+        </div>
+
+        <div class="stripe-glow-card" style="padding: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cyan);">03 · UI Design</span>
+            <span style="font-size: 13px; font-weight: 700; color: #fff;">Linear</span>
+          </div>
+          <h3 style="font-size: 17px; margin-bottom: 8px;">Razor-Sharp & Keyboard First</h3>
+          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
+            Subtle 1px translucent borders, glass backdrops, and an omnipresent <code>⌘K</code> Command Palette for instantaneous navigation.
+          </p>
+        </div>
+
+        <div class="stripe-glow-card" style="padding: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gold);">04 · Typography</span>
+            <span style="font-size: 13px; font-weight: 700; color: #fff;">Pentagram</span>
+          </div>
+          <h3 style="font-size: 17px; margin-bottom: 8px;">Editorial Authority</h3>
+          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
+            Optical kerning, negative tracking on bold display titles, and balanced line-heights harmonized with high-contrast monospace crypto keys.
+          </p>
+        </div>
+
+        <div class="stripe-glow-card" style="padding: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #a3a3a3;">05 · Minimalism</span>
+            <span style="font-size: 13px; font-weight: 700; color: #fff;">Muji</span>
+          </div>
+          <h3 style="font-size: 17px; margin-bottom: 8px;">Thoughtful Reduction</h3>
+          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
+            Deliberate elimination of visual noise, quiet unread markers, and serene negative space that centers human focus strictly on conversation.
+          </p>
+        </div>
+
+        <div class="stripe-glow-card" style="padding: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #f43f5e;">06 · Search</span>
+            <span style="font-size: 13px; font-weight: 700; color: #fff;">Airbnb</span>
+          </div>
+          <h3 style="font-size: 17px; margin-bottom: 8px;">Instant Category Filter Chips</h3>
+          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
+            Omni-search modal with horizontal scrolling category pills (Chats, Media, Voice, Docs) and real-time query match highlighting.
+          </p>
+        </div>
+
+        <div class="stripe-glow-card" style="padding: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #d4974d;">07 · Art Direction</span>
+            <span style="font-size: 13px; font-weight: 700; color: #fff;">Aesop</span>
+          </div>
+          <h3 style="font-size: 17px; margin-bottom: 8px;">Poetic Humanist Warmth</h3>
+          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
+            Tactile stone and warm charcoal undertones paired with philosophical epigraphs affirming privacy as an essential human sanctuary.
+          </p>
+        </div>
+
+        <div class="stripe-glow-card" style="padding: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #818cf8;">08 · Dashboards</span>
+            <span style="font-size: 13px; font-weight: 700; color: #fff;">Notion</span>
+          </div>
+          <h3 style="font-size: 17px; margin-bottom: 8px;">Modular Information Density</h3>
+          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
+            Collapsible block toggles, security health scorecards, and tabular cryptographic metrics organized with clean, scannable density.
+          </p>
+        </div>
+
+        <div class="stripe-glow-card" style="padding: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #6366f1;">09 · Landing Pages</span>
+            <span style="font-size: 13px; font-weight: 700; color: #fff;">Stripe</span>
+          </div>
+          <h3 style="font-size: 17px; margin-bottom: 8px;">Radiant Mesh & Precision</h3>
+          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
+            Multi-stop animated iridescent gradient mesh backdrops, glowing border highlights, and rigorous technical architecture proof.
+          </p>
+        </div>
+
+        <div class="stripe-glow-card" style="padding: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #ec4899;">10 · Interactions</span>
+            <span style="font-size: 13px; font-weight: 700; color: #fff;">Framer</span>
+          </div>
+          <h3 style="font-size: 17px; margin-bottom: 8px;">Magnetic Tactile Dynamics</h3>
+          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
+            Micro-magnetic hover attraction, silky sliding tab pill indicators, and reactive touch boundaries that make the app feel alive.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="section-wrap" id="faq">
+      <div class="section-header">
+        <div class="section-kicker">Got Questions?</div>
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <p class="section-desc">Everything you need to know about JChatt's security, identity, and compliance.</p>
+      </div>
+
+      <div class="faq-grid">
+        <div class="faq-card">
+          <h3>How do I recover my account without a phone number?</h3>
+          <p>
+            When you register, JChatt gives you a 12-word cryptographic seed phrase generated on your device. Write these 12 words down safely. Entering this phrase on any phone or browser instantly restores your account.
+          </p>
+        </div>
+
+        <div class="faq-card">
+          <h3>Can JChatt or servers read my messages or listen to calls?</h3>
+          <p>
+            Mathematically impossible. All messages are encrypted with AES-256-GCM and calls use WebRTC DTLS-SRTP before leaving your hardware. Servers only ever transmit ciphertext envelopes.
+          </p>
+        </div>
+
+        <div class="faq-card">
+          <h3>How does the Anti-Coercion Calculator Disguise work?</h3>
+          <p>
+            When enabled in Security Settings, JChatt masquerades as a functioning scientific calculator. Typing standard math performs calculations. Entering your secret code (e.g. <code>314159=</code>) instantly unlocks your secure vault.
+          </p>
+        </div>
+
+        <div class="faq-card">
+          <h3>Is JChatt completely free?</h3>
+          <p>
+            Yes. 100% free of charge. No subscriptions, no ads, and no paywalled features. We believe sovereign privacy is a universal human right.
+          </p>
+        </div>
+      </div>
+
+      <!-- Bottom Final CTA -->
+      <div class="bottom-cta">
+        <h2>Reclaim Your Communication Sovereignty</h2>
+        <p>Join the movement of people who refuse to trade their privacy for basic connectivity. Start chatting now.</p>
+        <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+          <a href="./web.html" class="btn-main">Open Web Messenger →</a>
+          <a href="./downloads/jchatt-v2.0.apk" class="btn-outline">Get Android App</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-top">
+        <a href="./index.html" class="brand-link">
+          <img src="./images/logo1.png" alt="JChatt Icon" class="brand-logo-img">
+          <span>JChatt</span>
+        </a>
+        <ul class="footer-links">
+          <li><a href="./index.html">Home</a></li>
+          <li><a href="./web.html">Web App</a></li>
+          <li><a href="./honors.html">Honors & Thanks</a></li>
+          <li><a href="./whitepaper.html">Whitepaper</a>
+        <a href="https://github.com/JJcoders00/jchatt" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+          <li><a href="./compliance.html">Compliance</a></li>
+          <li><a href="./privacy.html">Privacy Policy</a></li>
+          <li><a href="./terms.html">Terms of Service</a></li>
+        </ul>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 JChatt & JJ Coders. All rights reserved. Zero phone numbers · Client-side AES-256-GCM.</p>
+        <p>Intermediary Safe Harbor under IT Act 2000 § 79 & US EAR mass-market cryptography exempt.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

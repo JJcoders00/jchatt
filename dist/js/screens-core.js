@@ -184,6 +184,13 @@
       + '</div>';
   }
 
+  function duoProgressBar(stepLabel, pct) {
+    return '<div class="duo-progress-wrapper">'
+      + '<div class="duo-progress-header"><span>' + E(stepLabel) + '</span><span>' + pct + '%</span></div>'
+      + '<div class="duo-progress-bar"><div class="duo-progress-fill" style="width:' + pct + '%"></div></div>'
+      + '</div>';
+  }
+
   function btn(label, cls, attr) {
     return '<button class="btn ' + (cls || '') + '" ' + (attr || '') + '>' + label + '</button>';
   }
@@ -427,7 +434,7 @@
 
       var reactEntries = m.reactions ? Object.keys(m.reactions).map(function (u) { return m.reactions[u]; }).filter(Boolean) : [];
       var reactHtml = reactEntries.length
-        ? '<div style="display:inline-flex;gap:4px;background:#fff;color:#0a2230;border-radius:12px;padding:2px 7px;font-size:12px;margin-top:-6px;box-shadow:0 2px 6px rgba(0,0,0,.12)">' + reactEntries.join('') + '</div>'
+        ? '<div style="display:inline-flex;gap:4px;background:#fff;color:#0a2230;border-radius:12px;padding:2px 7px;font-size:12px;margin-top:-6px;box-shadow:0 2px 6px rgba(0,0,0,.12)">' + reactEntries.map(E).join('') + '</div>'
         : '';
 
       if (m.kind === 'sticker') {
@@ -556,6 +563,7 @@
       return '<div class="scr">'
         + hdr('Create your private ID', 'No phone or email required', backBtn('welcome-3'), '')
         + '<div class="body pad nonav">'
+        + duoProgressBar('Step 1 of 4: Identity Setup', 25)
         + invBanner
         + '<div style="display:grid;place-items:center;margin-bottom:14px">' + av(d.handle, 72) + '</div>'
         + '<div class="sec" style="padding-left:0">Private Handle</div>'
@@ -619,6 +627,7 @@
       return '<div class="scr">'
         + hdr('Lock it down', 'Protect this device', backBtn('create-id'), '<button style="color:var(--lime);font-weight:700" data-go="recovery-phrase">Skip</button>')
         + '<div class="body pad nonav">'
+        + duoProgressBar('Step 2 of 4: Anti-Coercion & PIN', 50)
         + '<div class="card">' + togRow('fingerprint', 'lime', 'Fingerprint / Face Unlock', 'Touch fingerprint sensor to open', s.biometric, 'biometric') + togRow('lock', 'lime', 'App Lock PIN', 'Ask for 4-digit PIN on open', s.appLock, 'appLock') + '</div>'
         + '<div class="sec" style="padding-left:0">Real Unlock PIN (4 digits)</div>'
         + '<div class="inw" style="margin-bottom:12px"><input id="sec-pin" type="password" maxlength="4" inputmode="numeric" value="' + E(s.lockPin || '') + '" placeholder="Leave blank or set 4 digits (e.g. 2468)"/></div>'
@@ -635,6 +644,7 @@
       return '<div class="scr">'
         + hdr('Recovery phrase', 'Your only key to restore @ID', backBtn('secure-device'), '')
         + '<div class="body pad nonav">'
+        + duoProgressBar('Step 3 of 4: Master Seed Backup', 75)
         + '<p style="font-size:13px;color:var(--mute);margin-bottom:12px">Write these 12 words down offline. JChatt has no password reset email — these words + your @ID restore your account on any phone worldwide.</p>'
         + '<div class="sn" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">'
         + words.map(function (w, i) { return '<div style="background:#fff;color:var(--ink);padding:7px;border-radius:10px;font-weight:700"><span style="opacity:.45;margin-right:4px">' + (i + 1) + '.</span>' + E(w) + '</div>'; }).join('')
@@ -649,6 +659,7 @@
       return '<div class="scr">'
         + hdr('Almost ready', 'Optional permissions', backBtn('recovery-phrase'), '')
         + '<div class="body pad nonav">'
+        + duoProgressBar('Step 4 of 4: Final Permissions', 100)
         + '<div class="card">'
         + row(ico('bell', 'lime'), 'Message notifications', 'Show disguised preview on incoming messages', '', 'data-act="reqnotif"')
         + row(ico('mic', 'ink'), 'Microphone & camera', 'Only used during voice notes, calls & QR scans', '', 'data-act="reqmedia"')
@@ -906,6 +917,22 @@
         + row(av(me.handle || 'me', 54, me.avatar, true), E(me.name || me.handle || 'Account'), E(me.bio || 'Available on JChatt') + ' · ' + E(me.handle || ''), I('edit', 17), 'data-go="profile-edit"')
         + '</div>'
         + accountSwitcherHtml
+        + '<div class="aesop-sanctuary-banner" style="margin-bottom:12px">'
+        + '<div class="aesop-quote">“To converse without third-party observation is not secrecy, but the natural birthright of thought. Speech is human sanctuary.”</div>'
+        + '<div class="aesop-cite">JChatt Sovereign Charter · Zero Metadata</div>'
+        + '</div>'
+        + '<div class="card" style="margin-bottom:12px;padding:12px 14px">'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+        + '<b style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute)">System Cryptographic Telemetry</b>'
+        + '<span class="pill" style="font-size:10px;background:rgba(0,168,132,0.15);color:#00a884;font-weight:700">ECDH P-256</span>'
+        + '</div>'
+        + '<div class="notion-metric-grid">'
+        + '<div class="notion-metric-tile"><span>Cipher Suite</span><b>AES-256-GCM</b></div>'
+        + '<div class="notion-metric-tile"><span>Forward Secrecy</span><b>Ratchet v3</b></div>'
+        + '<div class="notion-metric-tile"><span>Key Material</span><b>12-Word BIP-39</b></div>'
+        + '<div class="notion-metric-tile"><span>Command Palette</span><b style="cursor:pointer;color:var(--lime)" data-act="open_cmd_palette">Open (⌘K)</b></div>'
+        + '</div>'
+        + '</div>'
         + '<div class="gr2" style="padding:0;margin-bottom:12px">'
         + '<button style="background:#fff" data-go="appearance">' + ico('palette', 'lime') + '<b>Appearance</b><span style="font-size:11px;color:var(--mute)">' + (s.darkMode ? 'Dark' : 'Light') + ' · ' + E(s.theme) + '</span></button>'
         + '<button style="background:#fff" data-go="privacy-settings">' + ico('lock', 'ink') + '<b>Privacy</b><span style="font-size:11px;color:var(--mute)">Locks & receipts</span></button>'
@@ -1165,17 +1192,91 @@
 
     'search': function () {
       var q = (LV.searchQ || '').trim().toLowerCase();
-      var chats = sortedChats(true).filter(function (c) {
-        return !q || (c.name && c.name.toLowerCase().indexOf(q) > -1) || (c.handle && c.handle.toLowerCase().indexOf(q) > -1) || (c.lastText && c.lastText.toLowerCase().indexOf(q) > -1);
+      var filter = LV.searchFilter || 'all';
+      var allChats = sortedChats(true);
+      var chats = allChats.filter(function (c) {
+        if (filter === 'unread' && !(c.unread > 0)) return false;
+        if (!q) return true;
+        return (c.name && c.name.toLowerCase().indexOf(q) > -1) ||
+               (c.handle && c.handle.toLowerCase().indexOf(q) > -1) ||
+               (c.lastText && c.lastText.toLowerCase().indexOf(q) > -1);
       });
+
+      var filterPills = [
+        { id: 'all', label: '✨ All' },
+        { id: 'chats', label: '💬 Direct Chats' },
+        { id: 'unread', label: '🔴 Unread' },
+        { id: 'photos', label: '📸 Media' },
+        { id: 'voice', label: '🎙️ Voice' },
+        { id: 'vault', label: '🔒 Vault' }
+      ].map(function (p) {
+        var on = filter === p.id;
+        return '<button class="airbnb-pill ' + (on ? 'on' : '') + '" data-act="set_search_filter" data-v="' + p.id + '">' + p.label + '</button>';
+      }).join('');
+
       return '<div class="scr">'
-        + hdr('Search', 'On this device only', backBtn('chats'), '')
+        + hdr('Search', 'Airbnb Filter & Discovery', backBtn('chats'), '<kbd class="linear-kbd">ESC</kbd>')
         + '<div class="body pad nonav">'
-        + '<div class="inw" style="margin-bottom:12px">' + I('search', 18) + '<input id="glob-search" type="text" value="' + E(LV.searchQ) + '" placeholder="Search names, @IDs or messages..."/></div>'
+        + '<div class="inw" style="margin-bottom:8px">' + I('search', 18) + '<input id="glob-search" type="text" value="' + E(LV.searchQ) + '" placeholder="Search names, @IDs, messages or vault..."/></div>'
+        + '<div class="airbnb-filter-scroll" style="margin:0 -16px 8px -16px">' + filterPills + '</div>'
         + (chats.length ? chats.map(function (c) {
-          return row(av(c.name || c.handle, 42, c.avatar), E(c.name || c.handle), E(c.lastText || c.handle || ''), fmtTime(c.lastTs), 'data-act="open" data-id="' + E(c.id) + '"');
-        }).join('') : emptyP('search', 'No matches', 'Try another name or @handle.', ''))
+          var snippet = c.lastText || c.handle || '';
+          if (q && snippet.toLowerCase().indexOf(q) > -1) {
+            var idx = snippet.toLowerCase().indexOf(q);
+            snippet = E(snippet.substring(0, idx)) + '<span class="airbnb-search-match">' + E(snippet.substring(idx, idx + q.length)) + '</span>' + E(snippet.substring(idx + q.length));
+          } else {
+            snippet = E(snippet);
+          }
+          return row(av(c.name || c.handle, 42, c.avatar), E(c.name || c.handle), snippet, fmtTime(c.lastTs), 'data-act="open" data-id="' + E(c.id) + '"');
+        }).join('') : emptyP('search', 'No matches found', 'Try another search term or filter category.', ''))
         + '</div></div>';
+    },
+
+    'cmd-palette': function () {
+      var q = (LV.cmdQ || '').trim().toLowerCase();
+      var actions = [
+        { group: 'Navigation', icon: 'chats', label: 'Go to Chats / Inbox', act: 'go_chats', kbd: 'G C' },
+        { group: 'Navigation', icon: 'calls', label: 'Go to Calls Screen', act: 'go_calls', kbd: 'G A' },
+        { group: 'Navigation', icon: 'settings', label: 'Open Settings & Vault', act: 'go_settings', kbd: 'G S' },
+        { group: 'Actions', icon: 'users', label: 'Start New Private Chat', act: 'new_chat_prompt', kbd: '⌘ N' },
+        { group: 'Actions', icon: 'qr', label: 'Share / Scan QR Invite', act: 'open_qr', kbd: '⌘ Q' },
+        { group: 'Security', icon: 'lock', label: 'Lock Device Now (Biometric)', act: 'locknow', kbd: '⌘ L' },
+        { group: 'Security', icon: 'shield', label: 'Anti-Coercion Stealth Mode', act: 'open_stealth', kbd: '⌘ D' },
+        { group: 'Theme', icon: 'moon', label: 'Toggle Light / Dark Theme', act: 'toggle_theme', kbd: '⌘ T' }
+      ].filter(function (a) {
+        return !q || a.label.toLowerCase().indexOf(q) > -1 || a.group.toLowerCase().indexOf(q) > -1;
+      });
+
+      var groups = {};
+      actions.forEach(function (a) {
+        groups[a.group] = groups[a.group] || [];
+        groups[a.group].push(a);
+      });
+
+      var html = '<div class="cmd-palette-backdrop" data-act="wclose">'
+        + '<div class="cmd-palette-modal" onclick="event.stopPropagation()">'
+        + '<div class="cmd-input-row">'
+        + I('search', 18)
+        + '<input id="cmd-input" type="text" value="' + E(LV.cmdQ || '') + '" placeholder="Type a command or search... (Linear Style)" autofocus/>'
+        + '<kbd class="linear-kbd">ESC</kbd>'
+        + '</div>'
+        + '<div class="cmd-results-list">';
+
+      Object.keys(groups).forEach(function (grp) {
+        html += '<div class="cmd-group-label">' + E(grp) + '</div>';
+        groups[grp].forEach(function (item) {
+          html += '<div class="cmd-item" data-act="' + item.act + '">'
+            + '<div style="display:flex;align-items:center;gap:10px">'
+            + I(item.icon, 16)
+            + '<span>' + E(item.label) + '</span>'
+            + '</div>'
+            + '<kbd class="linear-kbd">' + E(item.kbd) + '</kbd>'
+            + '</div>';
+        });
+      });
+
+      html += '</div></div></div>';
+      return html;
     },
 
     'qr': function () {
