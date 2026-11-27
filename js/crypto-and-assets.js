@@ -543,9 +543,13 @@
   }
 
   function generatePhrase() {
-    var r = randBytes(16);
+    var pool = WORDS.slice();
+    var r = randBytes(24);
     var out = [];
-    for (var i = 0; i < 12; i++) out.push(WORDS[r[i] % WORDS.length]);
+    for (var i = 0; i < 12; i++) {
+      var pick = ((r[i * 2] << 8) | r[i * 2 + 1]) % pool.length;
+      out.push(pool.splice(pick, 1)[0]);
+    }
     return out;
   }
 

@@ -67,41 +67,46 @@
       padding: 0;
     }
 
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: 12px;
+      background: var(--emerald);
+      color: #070a0e;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 13px;
+      text-decoration: none;
+      z-index: 9999;
+    }
+    .skip-link:focus { left: 16px; }
+
     body {
       background-color: var(--bg);
       color: var(--text-main);
       font-family: var(--font-sans);
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+      -moz-osx-font-smoothing: grayscale;
       overflow-x: hidden;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
 
-    /* Stripe Radiant Ambient Background Mesh */
+    /* Ambient Background Glow */
     .ambient-glow {
       position: fixed;
-      top: -30vw;
+      top: -18vw;
       left: 50%;
       transform: translateX(-50%);
-      width: 120vw;
-      height: 80vw;
-      background: radial-gradient(at 20% 30%, rgba(0, 168, 132, 0.22) 0px, transparent 50%),
-                  radial-gradient(at 80% 20%, rgba(6, 182, 212, 0.18) 0px, transparent 50%),
-                  radial-gradient(at 50% 80%, rgba(88, 204, 2, 0.15) 0px, transparent 50%),
-                  radial-gradient(at 90% 70%, rgba(245, 158, 11, 0.12) 0px, transparent 50%);
+      width: 100vw;
+      height: 52vw;
+      background: radial-gradient(ellipse at 35% 30%, rgba(0, 168, 132, 0.14) 0%, transparent 55%),
+                  radial-gradient(ellipse at 68% 20%, rgba(130, 216, 47, 0.08) 0%, transparent 50%);
       pointer-events: none;
       z-index: 0;
-      animation: stripeCanvasFloat 22s ease-in-out infinite alternate;
-      filter: blur(40px);
-    }
-
-    @keyframes stripeCanvasFloat {
-      0% { transform: translateX(-50%) rotate(0deg) scale(1); }
-      50% { transform: translateX(-48%) rotate(3deg) scale(1.08); }
-      100% { transform: translateX(-50%) rotate(0deg) scale(1); }
     }
 
     /* Header Nav */
@@ -337,8 +342,41 @@
     .hero-mockup-frame {
       position: relative;
       display: flex;
+      flex-direction: column;
+      gap: 14px;
       justify-content: center;
       align-items: center;
+    }
+
+    .demo-tabs {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .demo-tab {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: #a4b8c4;
+      font: 600 12px/1.2 var(--font-sans, system-ui, sans-serif);
+      padding: 7px 13px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.18s ease, color 0.18s ease;
+    }
+
+    .demo-tab.on {
+      background: #ffffff;
+      color: #0a2230;
+    }
+
+    .demo-tab:focus-visible {
+      outline: 2px solid #82d82f;
+      outline-offset: 2px;
     }
 
     .mockup-phone {
@@ -347,10 +385,318 @@
       border-radius: 36px;
       padding: 10px;
       background: #111822;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 168, 132, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
       overflow: hidden;
-      transition: transform 0.4s ease;
+      transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .demo-stage {
+      border-radius: 28px;
+      background: #f3f5f5;
+      color: #0a2230;
+      min-height: 460px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-family: var(--font-sans, system-ui, sans-serif);
+    }
+
+    .demo-stage.calc-mode {
+      background: #0d161d;
+      color: #f4f7f8;
+    }
+
+    .demo-pane {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+    }
+
+    .demo-pane.on {
+      display: flex;
+    }
+
+    .demo-hdr {
+      padding: 14px 16px 12px;
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8ea;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .demo-peer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .demo-av {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #e9f4e2;
+      border: 1px solid #cfe7be;
+      color: #2f6c09;
+      font: 800 13px/34px var(--font-sans, system-ui, sans-serif);
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .demo-hdr b {
+      display: block;
+      font-size: 14px;
+      color: #0a2230;
+    }
+
+    .demo-hdr span {
+      display: block;
+      font-size: 11px;
+      color: #416b52;
+      font-weight: 600;
+    }
+
+    .demo-lock-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #ebf7df;
+      color: #2f6c09;
+      border: 1px solid #c9e8a8;
+    }
+
+    .demo-msgs {
+      flex: 1;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .demo-msg {
+      max-width: 84%;
+      padding: 10px 12px;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .demo-msg.in {
+      align-self: flex-start;
+      background: #ffffff;
+      border: 1px solid #dde4e7;
+      border-bottom-left-radius: 4px;
+      color: #0a2230;
+    }
+
+    .demo-msg.out {
+      align-self: flex-end;
+      background: #0f3a4f;
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .demo-cipher {
+      margin-top: 4px;
+      font: 600 10.5px/1.3 var(--font-mono, monospace);
+      opacity: 0.72;
+      word-break: break-all;
+    }
+
+    .demo-bar {
+      padding: 10px 12px 14px;
+      background: #ffffff;
+      border-top: 1px solid #e2e8ea;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .demo-ping {
+      flex: 1;
+      border: 1px solid #cfe0e6;
+      background: #f5f8f9;
+      color: #0a2230;
+      border-radius: 12px;
+      padding: 9px 12px;
+      font: 600 12.5px/1.2 var(--font-sans, system-ui, sans-serif);
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .demo-ping:hover {
+      background: #eaf1f4;
+    }
+
+    .demo-send {
+      border: 0;
+      border-bottom: 3px solid #3f840b;
+      background: #67bd1d;
+      color: #ffffff;
+      font: 700 12.5px/1 var(--font-sans, system-ui, sans-serif);
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .demo-duo {
+      padding: 16px;
+      background: #ffffff;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .demo-duo-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .demo-duo-track {
+      flex: 1;
+      height: 10px;
+      border-radius: 999px;
+      background: #e6eced;
+      overflow: hidden;
+    }
+
+    .demo-duo-fill {
+      width: 68%;
+      height: 100%;
+      background: #67bd1d;
+      border-radius: 999px;
+    }
+
+    .demo-duo-step {
+      font-size: 11px;
+      font-weight: 700;
+      color: #4f6773;
+    }
+
+    .demo-duo-mascot {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 14px 0 10px;
+    }
+
+    .demo-duo-mascot img {
+      width: 64px;
+      height: 64px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .demo-duo-bubble {
+      background: #f4f7f7;
+      border: 1px solid #d9e2e5;
+      border-radius: 16px;
+      padding: 10px 12px;
+      font-size: 12.5px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: #0a2230;
+    }
+
+    .demo-tiers {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .demo-tier {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border: 1.5px solid #d9e2e5;
+      background: #ffffff;
+      color: #0a2230;
+      cursor: pointer;
+      text-align: left;
+      font: 600 13px/1.2 var(--font-sans, system-ui, sans-serif);
+    }
+
+    .demo-tier small {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: #4f6773;
+      margin-top: 2px;
+    }
+
+    .demo-tier.on {
+      border-color: #4f9a12;
+      background: #f3fae9;
+    }
+
+    .demo-calc {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .demo-calc-note {
+      font-size: 11px;
+      color: #8ba3b0;
+      text-align: center;
+      min-height: 16px;
+    }
+
+    .demo-calc-note.unlocked {
+      color: #9be84d;
+      font-weight: 700;
+    }
+
+    .demo-calc-disp {
+      text-align: right;
+      font: 700 34px/1.1 var(--font-mono, monospace);
+      color: #ffffff;
+      padding: 10px 6px;
+      letter-spacing: -0.02em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .demo-calc-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .demo-ckey {
+      border: 0;
+      border-radius: 14px;
+      height: 46px;
+      background: #1a2631;
+      color: #f3f7f8;
+      font: 600 16px/1 var(--font-sans, system-ui, sans-serif);
+      cursor: pointer;
+    }
+
+    .demo-ckey:hover {
+      background: #243544;
+    }
+
+    .demo-ckey.fn {
+      background: #273746;
+      color: #b7ccd8;
+    }
+
+    .demo-ckey.eq {
+      background: #67bd1d;
+      color: #ffffff;
     }
 
     .mockup-phone:hover {
@@ -798,9 +1144,9 @@
       <ul class="nav-links">
         <li><a href="#features">Features</a></li>
         <li><a href="#security">Security</a></li>
-        <li><a href="./whitepaper.html">Whitepaper</a>
-        <a href="https://github.com/JJcoders00/jchatt" target="_blank" rel="noopener noreferrer">GitHub</a></li>
-        <li><a href="./honors.html" class="nav-badge-link">★ Honors</a></li>
+        <li><a href="./whitepaper.html">Whitepaper</a></li>
+        <li><a href="https://github.com/JJcoders00/jchatt" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        <li><a href="./honors.html" class="nav-badge-link">Honors</a></li>
         <li><a href="./compliance.html">Compliance</a></li>
         <li><a href="./downloads/jchatt-v2.0.apk">Download APK</a></li>
         <li><a href="./web.html" class="nav-cta-btn">Open Messenger</a></li>
@@ -848,10 +1194,169 @@
 
       <!-- Hero Visual Device Mockup -->
       <div class="hero-mockup-frame">
+        <div class="demo-tabs" role="tablist" aria-label="Interactive product preview">
+          <button type="button" class="demo-tab on" role="tab" aria-selected="true" data-demo="chat">Encrypted Chat</button>
+          <button type="button" class="demo-tab" role="tab" aria-selected="false" data-demo="onboarding">Guided Setup</button>
+          <button type="button" class="demo-tab" role="tab" aria-selected="false" data-demo="calc">Calc Disguise</button>
+        </div>
         <div class="mockup-phone">
-          <img src="./images/mockups/screenshot_4_inbox.png" alt="JChatt Encrypted Inbox Interface" class="mockup-screen-img">
+          <div class="demo-stage" id="demo-stage">
+            <div class="demo-pane on" data-pane="chat">
+              <div class="demo-hdr">
+                <div class="demo-peer">
+                  <div class="demo-av">NR</div>
+                  <div>
+                    <b>Nora Lindstrom</b>
+                    <span>@nora · Keys verified</span>
+                  </div>
+                </div>
+                <span class="demo-lock-tag">Ratchet v3</span>
+              </div>
+              <div class="demo-msgs" id="demo-msgs">
+                <div class="demo-msg in">
+                  Voice note arrived encrypted. Even the relay cannot read our handle metadata.
+                </div>
+                <div class="demo-msg out">
+                  Session key rotated just now. Tap below to inspect ciphertext on the wire.
+                  <div class="demo-cipher">enc:v3:ratchet:k8q9m3x2...a4f1</div>
+                </div>
+              </div>
+              <div class="demo-bar">
+                <button type="button" class="demo-ping" id="demo-ping-btn">Send encrypted ping...</button>
+                <a href="./web.html" class="demo-send" style="text-decoration:none;">Open App</a>
+              </div>
+            </div>
+
+            <div class="demo-pane" data-pane="onboarding">
+              <div class="demo-duo">
+                <div>
+                  <div class="demo-duo-top">
+                    <div class="demo-duo-track"><div class="demo-duo-fill"></div></div>
+                    <span class="demo-duo-step">Step 3 of 4</span>
+                  </div>
+                  <div class="demo-duo-mascot">
+                    <img src="./images/stickers/sticker_wave.png" alt="JChatt guide">
+                    <div class="demo-duo-bubble">Pick your default relay posture. You can adjust this anytime in Privacy.</div>
+                  </div>
+                  <div class="demo-tiers">
+                    <button type="button" class="demo-tier" data-tier="standard">
+                      <span>Standard<small>Direct TLS + Double Ratchet</small></span>
+                      <span>Fast</span>
+                    </button>
+                    <button type="button" class="demo-tier on" data-tier="strict">
+                      <span>Strict<small>Sealed sender + EXIF strip</small></span>
+                      <span>Default</span>
+                    </button>
+                    <button type="button" class="demo-tier" data-tier="stealth">
+                      <span>Stealth<small>Calculator disguise + padded frames</small></span>
+                      <span>Max</span>
+                    </button>
+                  </div>
+                </div>
+                <a href="./web.html" class="demo-send" style="display:block;text-align:center;text-decoration:none;padding:12px;">Continue Setup</a>
+              </div>
+            </div>
+
+            <div class="demo-pane" data-pane="calc">
+              <div class="demo-calc">
+                <div class="demo-calc-note" id="demo-calc-note">Enter passcode 314159 and press =</div>
+                <div class="demo-calc-disp" id="demo-calc-disp">0</div>
+                <div class="demo-calc-grid">
+                  <button type="button" class="demo-ckey fn" data-ck="C">AC</button>
+                  <button type="button" class="demo-ckey fn" data-ck="B">DEL</button>
+                  <button type="button" class="demo-ckey fn" data-ck="%">%</button>
+                  <button type="button" class="demo-ckey fn" data-ck="/">÷</button>
+                  <button type="button" class="demo-ckey" data-ck="7">7</button>
+                  <button type="button" class="demo-ckey" data-ck="8">8</button>
+                  <button type="button" class="demo-ckey" data-ck="9">9</button>
+                  <button type="button" class="demo-ckey fn" data-ck="*">×</button>
+                  <button type="button" class="demo-ckey" data-ck="4">4</button>
+                  <button type="button" class="demo-ckey" data-ck="5">5</button>
+                  <button type="button" class="demo-ckey" data-ck="6">6</button>
+                  <button type="button" class="demo-ckey fn" data-ck="-">-</button>
+                  <button type="button" class="demo-ckey" data-ck="1">1</button>
+                  <button type="button" class="demo-ckey" data-ck="2">2</button>
+                  <button type="button" class="demo-ckey" data-ck="3">3</button>
+                  <button type="button" class="demo-ckey fn" data-ck="+">+</button>
+                  <button type="button" class="demo-ckey" data-ck="0" style="grid-column:span 2;">0</button>
+                  <button type="button" class="demo-ckey" data-ck=".">.</button>
+                  <button type="button" class="demo-ckey eq" data-ck="=">=</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+      <script>
+        (function () {
+          var tabs = document.querySelectorAll('.demo-tab');
+          var panes = document.querySelectorAll('.demo-pane');
+          var stage = document.getElementById('demo-stage');
+          tabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+              var id = tab.getAttribute('data-demo');
+              tabs.forEach(function (t) {
+                var on = t === tab;
+                t.classList.toggle('on', on);
+                t.setAttribute('aria-selected', on ? 'true' : 'false');
+              });
+              panes.forEach(function (p) {
+                p.classList.toggle('on', p.getAttribute('data-pane') === id);
+              });
+              if (stage) stage.classList.toggle('calc-mode', id === 'calc');
+            });
+          });
+          var pingBtn = document.getElementById('demo-ping-btn');
+          var msgs = document.getElementById('demo-msgs');
+          var pingCount = 0;
+          if (pingBtn && msgs) {
+            pingBtn.addEventListener('click', function () {
+              pingCount += 1;
+              if (msgs.children.length > 3) msgs.removeChild(msgs.children[1]);
+              var row = document.createElement('div');
+              row.className = 'demo-msg out';
+              row.textContent = 'Offline ping #' + pingCount + ' sealed locally.';
+              var sub = document.createElement('div');
+              sub.className = 'demo-cipher';
+              sub.textContent = 'enc:v3:ratchet:' + Math.random().toString(36).slice(2, 10) + '...';
+              row.appendChild(sub);
+              msgs.appendChild(row);
+            });
+          }
+          document.querySelectorAll('.demo-tier').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              document.querySelectorAll('.demo-tier').forEach(function (b) { b.classList.remove('on'); });
+              btn.classList.add('on');
+            });
+          });
+          var disp = document.getElementById('demo-calc-disp');
+          var note = document.getElementById('demo-calc-note');
+          var buf = '0';
+          document.querySelectorAll('.demo-ckey').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              var k = btn.getAttribute('data-ck');
+              if (k === 'C') {
+                buf = '0';
+                if (note) { note.textContent = 'Enter passcode 314159 and press ='; note.classList.remove('unlocked'); }
+              } else if (k === 'B') {
+                buf = buf.length > 1 ? buf.slice(0, -1) : '0';
+              } else if (k === '=') {
+                if (buf === '314159') {
+                  buf = 'UNLOCKED';
+                  if (note) { note.textContent = 'Vault decrypted cleanly — zero traces left.'; note.classList.add('unlocked'); }
+                } else {
+                  try {
+                    if (/^[0-9+\-*/.% ]+$/.test(buf)) buf = String(Math.round(Function('return ' + buf)() * 1e6) / 1e6);
+                  } catch (e) { buf = 'ERR'; }
+                }
+              } else {
+                buf = (buf === '0' || buf === 'UNLOCKED' || buf === 'ERR') ? k : (buf + k).slice(0, 14);
+              }
+              if (disp) disp.textContent = buf;
+            });
+          });
+        })();
+      </script>
     </section>
 
     <!-- Trust / Metric Bar -->
@@ -1028,127 +1533,6 @@
             </tr>
           </tbody>
         </table>
-      </div>
-    </section>
-
-    <!-- 10 Master Design Disciplines Section -->
-    <section class="section-wrap" id="design-standards">
-      <div class="section-header">
-        <div class="section-kicker">Design Excellence</div>
-        <h2 class="section-title">Forged with 10 World-Class Design Disciplines</h2>
-        <p class="section-desc">We benchmarked every pixel, interaction, and transition against the undisputed industry standards of craft.</p>
-      </div>
-
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 24px;">
-        <div class="stripe-glow-card" style="padding: 24px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--emerald);">01 · Animations</span>
-            <span style="font-size: 13px; font-weight: 700; color: #fff;">Apple</span>
-          </div>
-          <h3 style="font-size: 17px; margin-bottom: 8px;">Fluid Spring Physics</h3>
-          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
-            Dynamic cubic-bezier spring curves, fluid sheet dismissals, and tactile micro-scale haptic responses that mirror physical momentum.
-          </p>
-        </div>
-
-        <div class="stripe-glow-card" style="padding: 24px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--lime);">02 · Onboarding</span>
-            <span style="font-size: 13px; font-weight: 700; color: #fff;">Duolingo</span>
-          </div>
-          <h3 style="font-size: 17px; margin-bottom: 8px;">Gamified Progression</h3>
-          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
-            Zero-friction milestone progress bars, interactive seed phrase confirmation challenges, and instant celebratory feedback.
-          </p>
-        </div>
-
-        <div class="stripe-glow-card" style="padding: 24px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cyan);">03 · UI Design</span>
-            <span style="font-size: 13px; font-weight: 700; color: #fff;">Linear</span>
-          </div>
-          <h3 style="font-size: 17px; margin-bottom: 8px;">Razor-Sharp & Keyboard First</h3>
-          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
-            Subtle 1px translucent borders, glass backdrops, and an omnipresent <code>⌘K</code> Command Palette for instantaneous navigation.
-          </p>
-        </div>
-
-        <div class="stripe-glow-card" style="padding: 24px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gold);">04 · Typography</span>
-            <span style="font-size: 13px; font-weight: 700; color: #fff;">Pentagram</span>
-          </div>
-          <h3 style="font-size: 17px; margin-bottom: 8px;">Editorial Authority</h3>
-          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
-            Optical kerning, negative tracking on bold display titles, and balanced line-heights harmonized with high-contrast monospace crypto keys.
-          </p>
-        </div>
-
-        <div class="stripe-glow-card" style="padding: 24px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #a3a3a3;">05 · Minimalism</span>
-            <span style="font-size: 13px; font-weight: 700; color: #fff;">Muji</span>
-          </div>
-          <h3 style="font-size: 17px; margin-bottom: 8px;">Thoughtful Reduction</h3>
-          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
-            Deliberate elimination of visual noise, quiet unread markers, and serene negative space that centers human focus strictly on conversation.
-          </p>
-        </div>
-
-        <div class="stripe-glow-card" style="padding: 24px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #f43f5e;">06 · Search</span>
-            <span style="font-size: 13px; font-weight: 700; color: #fff;">Airbnb</span>
-          </div>
-          <h3 style="font-size: 17px; margin-bottom: 8px;">Instant Category Filter Chips</h3>
-          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
-            Omni-search modal with horizontal scrolling category pills (Chats, Media, Voice, Docs) and real-time query match highlighting.
-          </p>
-        </div>
-
-        <div class="stripe-glow-card" style="padding: 24px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #d4974d;">07 · Art Direction</span>
-            <span style="font-size: 13px; font-weight: 700; color: #fff;">Aesop</span>
-          </div>
-          <h3 style="font-size: 17px; margin-bottom: 8px;">Poetic Humanist Warmth</h3>
-          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
-            Tactile stone and warm charcoal undertones paired with philosophical epigraphs affirming privacy as an essential human sanctuary.
-          </p>
-        </div>
-
-        <div class="stripe-glow-card" style="padding: 24px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #818cf8;">08 · Dashboards</span>
-            <span style="font-size: 13px; font-weight: 700; color: #fff;">Notion</span>
-          </div>
-          <h3 style="font-size: 17px; margin-bottom: 8px;">Modular Information Density</h3>
-          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
-            Collapsible block toggles, security health scorecards, and tabular cryptographic metrics organized with clean, scannable density.
-          </p>
-        </div>
-
-        <div class="stripe-glow-card" style="padding: 24px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #6366f1;">09 · Landing Pages</span>
-            <span style="font-size: 13px; font-weight: 700; color: #fff;">Stripe</span>
-          </div>
-          <h3 style="font-size: 17px; margin-bottom: 8px;">Radiant Mesh & Precision</h3>
-          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
-            Multi-stop animated iridescent gradient mesh backdrops, glowing border highlights, and rigorous technical architecture proof.
-          </p>
-        </div>
-
-        <div class="stripe-glow-card" style="padding: 24px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-            <span style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #ec4899;">10 · Interactions</span>
-            <span style="font-size: 13px; font-weight: 700; color: #fff;">Framer</span>
-          </div>
-          <h3 style="font-size: 17px; margin-bottom: 8px;">Magnetic Tactile Dynamics</h3>
-          <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.55;">
-            Micro-magnetic hover attraction, silky sliding tab pill indicators, and reactive touch boundaries that make the app feel alive.
-          </p>
-        </div>
       </div>
     </section>
 

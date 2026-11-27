@@ -284,6 +284,7 @@
     return '<div class="webwrap"><div class="wbox">'
       + '<div class="web ' + (showInfo ? '' : 'noinfo ') + (isOpen ? 'open ' : '') + themeCls() + '">'
       + railHtml + listCol + mainCol + infoCol + modalHtml
+      + (LV.cmdOpen && JCS.renderCmdPalette ? JCS.renderCmdPalette() : '')
       + '</div></div></div>';
   }
 
@@ -360,9 +361,10 @@
       } else {
         var sFn = JCS.SCREENS[LV.route] || JCS.SCREENS['splash'];
         var phoneBg = '';
-        if (LV.route.indexOf('welcome-') === 0 || LV.route === 'account-ready') phoneBg = 'paper';
+        if (LV.route.indexOf('welcome-') === 0 || LV.route === 'create-id' || LV.route === 'secure-device' || LV.route === 'recovery-phrase' || LV.route === 'permissions' || LV.route === 'account-ready') phoneBg = 'paper';
         nextHtml = '<div class="studio"><div class="proto"><div class="phone ' + phoneBg + ' ' + themeCls() + '">'
           + sFn().replace('class="scr"', 'class="scr ' + (LV.anim || '') + '"')
+          + (LV.cmdOpen && JCS.renderCmdPalette ? JCS.renderCmdPalette() : '')
           + '</div></div></div>';
         LV.anim = '';
       }
@@ -451,40 +453,118 @@
       LV.searchFilter = el.getAttribute('data-v') || 'all';
       render();
     },
-    open_cmd_palette: function () {
-      LV.cmdQ = '';
-      if (isDesktopShellRoute()) {
-        LV.wmodal = 'cmd-palette';
-        render();
-      } else {
-        go('cmd-palette', 'push');
+    picktier: function (el) {
+      var v = el.getAttribute('data-v') || 'balanced';
+      LV.privacyTier = v;
+      if (v === 'balanced') {
+        LV.settings.readReceipts = true;
+        LV.settings.typingIndicators = true;
+        LV.settings.notifHidePreview = false;
+        LV.settings.blockScreenshots = true;
+      } else if (v === 'quiet') {
+        LV.settings.readReceipts = false;
+        LV.settings.typingIndicators = false;
+        LV.settings.notifHidePreview = true;
+        LV.settings.blockScreenshots = true;
+      } else if (v === 'vault') {
+        LV.settings.readReceipts = false;
+        LV.settings.typingIndicators = false;
+        LV.settings.notifHidePreview = true;
+        LV.settings.blockScreenshots = true;
+        LV.settings.appLock = true;
       }
+      LV.save();
+      if (global.JCSOUND && global.JCSOUND.playTap) global.JCSOUND.playTap();
+      render();
+    },
+    pickcreateav: function (el) {
+      LV.draftCreate.avatar = el.getAttribute('data-v') || '';
+      if (global.JCSOUND && global.JCSOUND.playTap) global.JCSOUND.playTap();
+      render();
+    },
+    seedquiz: function (el) {
+      var w = el.getAttribute('data-v') || '';
+      var words = LV.settings.phrase || [];
+      var qz = LV.seedQuiz || { targets: [2, 8], picked: {}, wrongWord: '' };
+      var tA = words[qz.targets[0]];
+      var tB = words[qz.targets[1]];
+      if (w === tA || w === tB) {
+        qz.picked[w] = true;
+        qz.wrongWord = '';
+        LV.seedQuiz = qz;
+        var cnt = (qz.picked[tA] ? 1 : 0) + (qz.picked[tB] ? 1 : 0);
+        if (global.JCSOUND) {
+          if (cnt === 2 && global.JCSOUND.playSuccess) global.JCSOUND.playSuccess();
+          else if (global.JCSOUND.playTap) global.JCSOUND.playTap();
+        }
+      } else {
+        qz.wrongWord = w;
+        LV.seedQuiz = qz;
+        toast('Check word #' + (qz.targets[0] + 1) + ' or #' + (qz.targets[1] + 1) + ' above');
+      }
+      render();
+    },
+    tgshield: function () {
+      LV.shieldExpanded = !LV.shieldExpanded;
+      render();
+    },
+    open_cmd_palette: function () {
+      LV.cmdOpen = true;
+      LV.cmdQ = '';
+      LV.cmdIdx = 0;
+      render();
+      setTimeout(function () {
+        var inp = document.getElementById('cmd-input');
+        if (inp) inp.focus();
+      }, 20);
+    },
+    close_cmd_palette: function () {
+      LV.cmdOpen = false;
+      if (LV.route === 'cmd-palette') go('chats', 'pop');
+      else render();
     },
     go_chats: function () {
+      LV.cmdOpen = false;
       LV.wmodal = null;
       go('chats', 'pop');
     },
+    go_updates: function () {
+      LV.cmdOpen = false;
+      LV.wmodal = null;
+      go('updates', 'tab');
+    },
+    go_shield: function () {
+      LV.cmdOpen = false;
+      LV.wmodal = null;
+      go('shield', 'tab');
+    },
     go_calls: function () {
+      LV.cmdOpen = false;
       LV.wmodal = null;
       go('calls', 'tab');
     },
     go_settings: function () {
+      LV.cmdOpen = false;
       LV.wmodal = null;
       go('settings', 'tab');
     },
     new_chat_prompt: function () {
+      LV.cmdOpen = false;
       LV.wmodal = null;
-      go('new-chat', 'push');
+      go('add-contact', 'push');
     },
     open_qr: function () {
+      LV.cmdOpen = false;
       LV.wmodal = null;
       go('qr', 'push');
     },
     open_stealth: function () {
+      LV.cmdOpen = false;
       LV.wmodal = null;
       go('disguise', 'push');
     },
     toggle_theme: function () {
+      LV.cmdOpen = false;
       LV.settings.darkMode = !LV.settings.darkMode;
       LV.save();
       render();
@@ -512,6 +592,8 @@
     open: function (el) {
       var id = el.getAttribute('data-id');
       if (!id) return;
+      LV.cmdOpen = false;
+      LV.wmodal = null;
       LV.curChatId = id;
       LV.chatSearchQ = '';
       LV.replyTo = null;
@@ -587,7 +669,8 @@
       var res = await JFE.createAccount({
         handle: h,
         name: LV.draftCreate.name || h.replace(/^@/, ''),
-        phrase: phrase
+        phrase: phrase,
+        avatar: (LV.draftCreate && LV.draftCreate.avatar) || ''
       });
       LV.draftCreate.busy = false;
       if (res.error) {
@@ -691,6 +774,7 @@
     backedup: function () {
       LV.settings.phraseBackedUp = true;
       LV.save();
+      if (window.JCSOUND && window.JCSOUND.playSuccess) window.JCSOUND.playSuccess();
       go('permissions', 'push');
     },
     reqnotif: function () {
@@ -721,6 +805,7 @@
     enterapp: function () {
       LV.settings.onboarded = true;
       LV.save();
+      if (window.JCSOUND && window.JCSOUND.playSuccess) window.JCSOUND.playSuccess();
       go('chats', 'push');
     },
     lookupid: async function () {
@@ -1591,6 +1676,7 @@
       }
     } else if (t.id === 'cmd-input') {
       LV.cmdQ = t.value;
+      LV.cmdIdx = 0;
       render();
     } else if (t.id === 'glob-search') {
       LV.searchQ = t.value;
@@ -1622,15 +1708,43 @@
   });
 
   document.addEventListener('keydown', function (ev) {
+    if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'k') {
+      ev.preventDefault();
+      if (LV.cmdOpen) ACT.close_cmd_palette();
+      else ACT.open_cmd_palette();
+      return;
+    }
+    if (LV.cmdOpen) {
+      if (ev.key === 'Escape') {
+        ev.preventDefault();
+        ACT.close_cmd_palette();
+        return;
+      }
+      if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+        ev.preventDefault();
+        var items = JCS.getCmdItems ? JCS.getCmdItems(LV.cmdQ) : [];
+        if (items.length) {
+          var dir = ev.key === 'ArrowDown' ? 1 : -1;
+          LV.cmdIdx = ((LV.cmdIdx || 0) + dir + items.length) % items.length;
+          render();
+          var ci = document.getElementById('cmd-input');
+          if (ci) { ci.focus(); ci.setSelectionRange(ci.value.length, ci.value.length); }
+        }
+        return;
+      }
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        var selEl = document.querySelector('.cmd-item.sel') || document.querySelector('.cmd-item');
+        if (selEl) selEl.click();
+        return;
+      }
+    }
     if (ev.key === 'Enter' && document.activeElement && document.activeElement.id === 'chat-input') {
       ev.preventDefault();
       ACT.send();
     } else if (ev.key === 'Enter' && document.activeElement && document.activeElement.id === 'add-handle') {
       ev.preventDefault();
       ACT.lookupid();
-    } else if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'k') {
-      ev.preventDefault();
-      ACT.open_cmd_palette();
     } else if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'n') {
       ev.preventDefault();
       if (isDesktopShellRoute()) { LV.wmodal = 'add-contact'; render(); }

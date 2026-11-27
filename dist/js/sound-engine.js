@@ -314,6 +314,55 @@
     } catch (e) {}
   }
 
+  // Subtle tactile tap chime for onboarding choices & seed verification
+  function playTap() {
+    if (global.LV && global.LV.settings && global.LV.settings.soundEffects === false) return;
+    var c = getCtx();
+    if (!c) return;
+    var now = c.currentTime;
+    try {
+      var osc = c.createOscillator();
+      var gain = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.exponentialRampToValueAtTime(680, now + 0.045);
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.055);
+      osc.connect(gain);
+      gain.connect(c.destination);
+      osc.start(now);
+      osc.stop(now + 0.06);
+    } catch (e) {}
+  }
+
+  // Celebratory milestone chime on completing onboarding / vault unlock
+  function playSuccess() {
+    if (global.LV && global.LV.settings && global.LV.settings.soundEffects === false) return;
+    var c = getCtx();
+    if (!c) return;
+    var now = c.currentTime;
+    [
+      { f: 523.25, t: 0.0, d: 0.12 },
+      { f: 659.25, t: 0.09, d: 0.12 },
+      { f: 783.99, t: 0.18, d: 0.14 },
+      { f: 1046.50, t: 0.28, d: 0.34 }
+    ].forEach(function (n) {
+      try {
+        var osc = c.createOscillator();
+        var gain = c.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(n.f, now + n.t);
+        gain.gain.setValueAtTime(0, now + n.t);
+        gain.gain.linearRampToValueAtTime(0.14, now + n.t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + n.t + n.d);
+        osc.connect(gain);
+        gain.connect(c.destination);
+        osc.start(now + n.t);
+        osc.stop(now + n.t + n.d + 0.04);
+      } catch (e) {}
+    });
+  }
+
   global.JCSOUND = {
     playIncomingCall: playIncomingCall,
     playRingback: playRingback,
@@ -321,6 +370,8 @@
     playCallEnded: playCallEnded,
     playMsgSent: playMsgSent,
     playMsgReceived: playMsgReceived,
+    playTap: playTap,
+    playSuccess: playSuccess,
     sendNotification: sendNotification,
     ensureNotificationChannel: ensureNotificationChannel,
     startForegroundKeepalive: startForegroundKeepalive,

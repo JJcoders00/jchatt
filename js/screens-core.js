@@ -101,7 +101,14 @@
     curChatId: null,
     filter: 'all',
     searchQ: '',
+    searchFilter: 'all',
     chatSearchQ: '',
+    cmdOpen: false,
+    cmdQ: '',
+    cmdIdx: 0,
+    privacyTier: 'balanced',
+    shieldExpanded: false,
+    seedQuiz: { targets: [2, 8], picked: {}, wrongWord: '' },
     replyTo: null,
     selMsgId: null,
     pendingTimer: null,
@@ -118,7 +125,7 @@
     calcReset: false,
     pinBuffer: '',
     pinMode: 'app',
-    draftCreate: { handle: '', name: '', mask: 'Personal', error: '' },
+    draftCreate: { handle: '', name: '', mask: 'Personal', avatar: '', error: '' },
     draftRestore: { tab: 'phrase', handle: '', phrase: '', code: '', error: '', busy: false },
     draftAdd: { handle: '', result: null, error: '', searching: false },
     draftGroup: { name: '', picked: {} },
@@ -184,10 +191,14 @@
       + '</div>';
   }
 
-  function duoProgressBar(stepLabel, pct) {
-    return '<div class="duo-progress-wrapper">'
-      + '<div class="duo-progress-header"><span>' + E(stepLabel) + '</span><span>' + pct + '%</span></div>'
-      + '<div class="duo-progress-bar"><div class="duo-progress-fill" style="width:' + pct + '%"></div></div>'
+  function duoTop(pct, backTo, rightHtml) {
+    var left = backTo
+      ? '<button class="duo-back" ' + (backTo === 'back' ? 'data-back="1"' : 'data-go="' + E(backTo) + '"') + ' aria-label="Back">' + I('back', 20) + '</button>'
+      : '<span style="width:38px;flex:none"></span>';
+    return '<div class="duo-top">'
+      + left
+      + '<div class="duo-prog"><div class="duo-prog-fill" style="width:' + pct + '%"></div></div>'
+      + (rightHtml || '<span style="width:38px;flex:none"></span>')
       + '</div>';
   }
 
@@ -506,104 +517,77 @@
       var reconnectCard = '';
       if (exAcc && (exAcc.handle || exAcc.name)) {
         var hName = exAcc.handle || exAcc.name;
-        reconnectCard = '<div class="card" style="background:#e2f4d0;border:1px solid #c2e6a3;color:#0a2230;margin-bottom:12px;text-align:left">'
-          + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--lime-d)">Device Account Detected</div>'
-          + '<div style="font-size:16px;font-weight:700;margin:3px 0 6px">' + E(hName) + '</div>'
-          + btn('Continue as ' + E(hName), 'ink', 'data-act="reconnect_saved"')
+        reconnectCard = '<div class="duo-card on" style="margin-bottom:4px;cursor:pointer" data-act="reconnect_saved">'
+          + av(exAcc.handle || hName, 44, exAcc.avatar, true)
+          + '<div style="flex:1;min-width:0">'
+          + '<div style="font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--lime-d)">Saved on this device</div>'
+          + '<b style="display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis">' + E(hName) + '</b>'
+          + '</div>'
+          + '<span class="pill on" style="font-weight:700">Continue</span>'
           + '</div>';
       }
-      return '<div class="duo-onboarding-container">'
-        + '<div class="duo-top-nav">'
-        + '<div class="duo-bar-container"><div class="duo-bar-fill" style="width:25%"></div></div>'
-        + '<button style="color:var(--mute);font-weight:800;font-size:13px;letter-spacing:0.02em" data-go="restore-account">SIGN IN</button>'
-        + '</div>'
+      return '<div class="scr ob-duo">'
+        + duoTop(20, '', '<button style="color:var(--mute);font-weight:700;font-size:13px" data-go="restore-account">Sign in</button>')
         + reconnectCard
-        + '<div class="duo-mascot-speech-row">'
-        + '<div class="duo-mascot-box">' + global.JCA.mascot('wave', 92) + '</div>'
-        + '<div class="duo-bubble">Hi! I\'m your private security companion. What brings you to JChatt today?</div>'
+        + '<div class="duo-hero">'
+        + '<div class="duo-bear">' + global.JCA.mascot('wave', 92) + '</div>'
+        + '<div class="duo-speech">Hey there! No phone number needed here — ready for private chats in 30 seconds?</div>'
         + '</div>'
-        + '<div style="margin-bottom:16px">'
-        + '<div class="duo-option-card selected" onclick="this.classList.toggle(\'selected\')">'
-        + '<span style="font-size:22px">🛡️</span>'
-        + '<div style="flex:1"><b style="display:block;font-size:14px">Zero Phone Numbers</b><span style="font-size:12px;color:var(--mute)">No SIM card, zero telecom tracking</span></div>'
-        + '<div class="duo-check-circle">&#10003;</div>'
+        + '<div class="duo-facts">'
+        + '<div class="duo-fact">' + ico('lock', 'lime') + '<div><b>End-to-end encrypted</b><span>Messages, photos, voice notes, and calls stay on your keys.</span></div></div>'
+        + '<div class="duo-fact">' + ico('timer', 'ink') + '<div><b>Vanish on your schedule</b><span>Set 10-second timers or burn-after-reading per thread.</span></div></div>'
+        + '<div class="duo-fact">' + ico('mask', 'org') + '<div><b>Disguise & Duress PIN</b><span>Switch into a working calculator or decoy inbox in one tap.</span></div></div>'
         + '</div>'
-        + '<div class="duo-option-card selected" onclick="this.classList.toggle(\'selected\')">'
-        + '<span style="font-size:22px">🔐</span>'
-        + '<div style="flex:1"><b style="display:block;font-size:14px">AES-256 Military Encryption</b><span style="font-size:12px;color:var(--mute)">Double Ratchet forward secrecy</span></div>'
-        + '<div class="duo-check-circle">&#10003;</div>'
-        + '</div>'
-        + '<div class="duo-option-card" onclick="this.classList.toggle(\'selected\')">'
-        + '<span style="font-size:22px">🕵️</span>'
-        + '<div style="flex:1"><b style="display:block;font-size:14px">Anti-Coercion Calculator</b><span style="font-size:12px;color:var(--mute)">Stealth decoy vault protection</span></div>'
-        + '<div class="duo-check-circle">&#10003;</div>'
-        + '</div>'
-        + '</div>'
-        + '<div style="display:grid;gap:10px;margin-top:auto">'
-        + '<button class="duo-btn-chunky-green" data-go="welcome-2">CONTINUE</button>'
-        + '<button class="duo-btn-chunky-ghost" data-go="restore-account">I ALREADY HAVE AN ACCOUNT</button>'
-        + '</div>'
-        + '<div style="font-size:11px;color:var(--mute);text-align:center;margin-top:14px;line-height:1.5">'
-        + 'By continuing you accept the <button data-act="openlegal" data-v="terms" style="background:none;border:none;color:var(--lime);font-weight:700;text-decoration:underline;padding:0;cursor:pointer">Terms</button> & <button data-act="openlegal" data-v="privacy" style="background:none;border:none;color:var(--lime);font-weight:700;text-decoration:underline;padding:0;cursor:pointer">Privacy Policy</button>.'
-        + '</div></div>';
+        + '<div class="duo-foot">'
+        + btn('Get started', '', 'data-go="welcome-2"')
+        + btn('I already have a handle', 'outline', 'data-go="restore-account"')
+        + '<div style="font-size:11px;color:var(--mute);text-align:center;line-height:1.45">'
+        + 'By continuing you accept the <button data-act="openlegal" data-v="terms" style="color:var(--ink);font-weight:700;text-decoration:underline;padding:0">Terms</button> &amp; <button data-act="openlegal" data-v="privacy" style="color:var(--ink);font-weight:700;text-decoration:underline;padding:0">Privacy Policy</button>.'
+        + '</div></div></div>';
     },
 
     'welcome-2': function () {
-      return '<div class="duo-onboarding-container">'
-        + '<div class="duo-top-nav">'
-        + '<button style="color:var(--mute)" data-back="1">' + I('back', 18) + '</button>'
-        + '<div class="duo-bar-container"><div class="duo-bar-fill" style="width:50%"></div></div>'
-        + '<button style="color:var(--mute);font-weight:800;font-size:13px;letter-spacing:0.02em" data-go="restore-account">SIGN IN</button>'
+      var tier = LV.privacyTier || 'balanced';
+      var tiers = [
+        { id: 'balanced', ic: 'shield', cls: 'lime', title: 'Balanced Private', sub: 'Read receipts on · encrypted chats & calls' },
+        { id: 'quiet', ic: 'eyeOff', cls: 'ink', title: 'Extra Quiet', sub: 'Hide read receipts, typing status & alert previews' },
+        { id: 'vault', ic: 'lock', cls: 'org', title: 'Strict Vault', sub: 'Screenshot shield + require PIN lock on every open' }
+      ];
+      return '<div class="scr ob-duo">'
+        + duoTop(40, 'welcome-1', '<button style="color:var(--mute);font-weight:700;font-size:13px" data-go="restore-account">Sign in</button>')
+        + '<div class="duo-hero">'
+        + '<div class="duo-bear">' + global.JCA.mascot('think', 92) + '</div>'
+        + '<div class="duo-speech">Pick how private your new account should start. You can tune everything later.</div>'
         + '</div>'
-        + '<div class="duo-mascot-speech-row">'
-        + '<div class="duo-mascot-box">' + global.JCA.mascot('think', 92) + '</div>'
-        + '<div class="duo-bubble">Disappear on your own schedule. How do you prefer your confidential notes handled?</div>'
+        + '<div class="duo-list">'
+        + tiers.map(function (t) {
+          var on = tier === t.id;
+          return '<button class="duo-card ' + (on ? 'on' : '') + '" data-act="picktier" data-v="' + t.id + '">'
+            + ico(t.ic, t.cls)
+            + '<div style="flex:1;min-width:0"><b style="display:block;font-size:14.5px;margin-bottom:2px">' + E(t.title) + '</b><span style="display:block;font-size:12px;color:var(--mute)">' + E(t.sub) + '</span></div>'
+            + '<span class="duo-ck">' + (on ? I('check', 13) : '') + '</span>'
+            + '</button>';
+        }).join('')
         + '</div>'
-        + '<div style="margin-bottom:16px">'
-        + '<div class="duo-option-card selected" onclick="this.classList.toggle(\'selected\')">'
-        + '<span style="font-size:22px">⏱️</span>'
-        + '<div style="flex:1"><b style="display:block;font-size:14px">10-Second Vanishing Timers</b><span style="font-size:12px;color:var(--mute)">Automatic shredding across all devices</span></div>'
-        + '<div class="duo-check-circle">&#10003;</div>'
-        + '</div>'
-        + '<div class="duo-option-card selected" onclick="this.classList.toggle(\'selected\')">'
-        + '<span style="font-size:22px">👁️</span>'
-        + '<div style="flex:1"><b style="display:block;font-size:14px">View-Once Media Vault</b><span style="font-size:12px;color:var(--mute)">Decrypted in RAM, never saved to disk</span></div>'
-        + '<div class="duo-check-circle">&#10003;</div>'
-        + '</div>'
-        + '<div class="duo-option-card" onclick="this.classList.toggle(\'selected\')">'
-        + '<span style="font-size:22px">🔥</span>'
-        + '<div style="flex:1"><b style="display:block;font-size:14px">Burn on Read</b><span style="font-size:12px;color:var(--mute)">Immediate erasure upon recipient open</span></div>'
-        + '<div class="duo-check-circle">&#10003;</div>'
-        + '</div>'
-        + '</div>'
-        + '<div style="display:grid;gap:10px;margin-top:auto">'
-        + '<button class="duo-btn-chunky-green" data-go="welcome-3">CONTINUE</button>'
+        + '<div class="duo-foot">'
+        + btn('Continue', '', 'data-go="welcome-3"')
         + '</div></div>';
     },
 
     'welcome-3': function () {
-      return '<div class="duo-onboarding-container">'
-        + '<div class="duo-top-nav">'
-        + '<button style="color:var(--mute)" data-back="1">' + I('back', 18) + '</button>'
-        + '<div class="duo-bar-container"><div class="duo-bar-fill" style="width:75%"></div></div>'
-        + '<span></span>'
+      return '<div class="scr ob-duo">'
+        + duoTop(56, 'welcome-2', '')
+        + '<div class="duo-hero">'
+        + '<div class="duo-bear">' + global.JCA.mascot('secret', 92) + '</div>'
+        + '<div class="duo-speech">Your identity lives inside 12 recovery words — never linked to a phone number or SIM.</div>'
         + '</div>'
-        + '<div class="duo-mascot-speech-row">'
-        + '<div class="duo-mascot-box">' + global.JCA.mascot('secret', 92) + '</div>'
-        + '<div class="duo-bubble">Awesome! Your sovereign key will be generated locally right now. No servers, no phone numbers. Ready?</div>'
+        + '<div class="duo-facts">'
+        + '<div class="duo-fact">' + ico('key', 'lime') + '<div><b>Generated on your device</b><span>Only you hold your private handle credentials and phrase.</span></div></div>'
+        + '<div class="duo-fact">' + ico('users', 'ink') + '<div><b>Separate identity masks</b><span>Keep Work, Personal, and Ghost personas clean and isolated.</span></div></div>'
         + '</div>'
-        + '<div style="margin-bottom:16px">'
-        + '<div class="card" style="background:rgba(88,204,2,0.1);border:1.5px solid #58cc02;padding:16px;border-radius:18px">'
-        + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">'
-        + '<span style="font-size:20px">✨</span>'
-        + '<b style="color:#58cc02;font-size:14px">100% Client-Side Identity</b>'
-        + '</div>'
-        + '<p style="font-size:13px;color:#d0d6e0;line-height:1.5;margin:0">A unique 12-word recovery phrase is derived on your hardware using BIP-39 mnemonic entropy. Nobody else can ever revoke or freeze your account.</p>'
-        + '</div>'
-        + '</div>'
-        + '<div style="display:grid;gap:10px;margin-top:auto">'
-        + '<button class="duo-btn-chunky-green" data-go="create-id">CREATE MY PRIVATE ID</button>'
-        + '<button class="duo-btn-chunky-ghost" data-go="restore-account">RESTORE AN EXISTING ID</button>'
+        + '<div class="duo-foot">'
+        + btn('Create my private ID', '', 'data-go="create-id"')
+        + btn('Restore existing ID or link device', 'outline', 'data-go="restore-account"')
         + '</div></div>';
     },
 
@@ -611,22 +595,29 @@
       var d = LV.draftCreate;
       var suggest = d.handle || global.JCA.randomHandle();
       if (!d.handle) d.handle = suggest;
+      var avChoices = global.JCA.ASSETS.humans.slice(0, 6).concat(global.JCA.ASSETS.mascots.slice(0, 4));
+      var curAv = d.avatar || '';
       var invBanner = LV.pendingInvitePreview
-        ? '<div class="card" style="background:#e2f4d0;color:#0a2230;margin:0 0 14px"><b>Invite ready from ' + E(LV.pendingInvitePreview.name || LV.pendingInvitePreview.handle) + '</b><p style="font-size:12px">Finish creating your ID and your chat will open immediately.</p></div>'
+        ? '<div class="card" style="background:#e2f4d0;color:#0a2230;margin:0 0 12px"><b>Invite ready from ' + E(LV.pendingInvitePreview.name || LV.pendingInvitePreview.handle) + '</b><p style="font-size:12px">Finish creating your ID and your chat will open immediately.</p></div>'
         : '';
-      return '<div class="scr">'
-        + hdr('Create your private ID', 'No phone or email required', backBtn('welcome-3'), '')
-        + '<div class="body pad nonav">'
-        + duoProgressBar('Step 1 of 4: Identity Setup', 25)
+      return '<div class="scr ob-duo">'
+        + duoTop(70, 'welcome-3', '')
         + invBanner
-        + '<div style="display:grid;place-items:center;margin-bottom:14px">' + av(d.handle, 72) + '</div>'
+        + '<div style="display:grid;place-items:center;margin-bottom:8px">' + av(d.handle, 72, curAv) + '</div>'
+        + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);text-align:center;margin-bottom:6px">Choose avatar</div>'
+        + '<div class="av-pick-row">'
+        + avChoices.map(function (u) {
+          var sel = curAv === u;
+          return '<button class="av-pick ' + (sel ? 'on' : '') + '" data-act="pickcreateav" data-v="' + E(u) + '"><img src="' + E(u) + '" alt="Avatar"/></button>';
+        }).join('')
+        + '</div>'
         + '<div class="sec" style="padding-left:0">Private Handle</div>'
         + '<div class="inw" style="margin-bottom:10px">'
         + '<input id="cid-handle" type="text" value="' + E(d.handle) + '" placeholder="@your.private.id"/>'
         + '<button title="Randomize" data-act="randhandle">' + I('refresh', 18) + '</button>'
         + '</div>'
         + '<div class="sec" style="padding-left:0">Display Name</div>'
-        + '<div class="inw" style="margin-bottom:12px">'
+        + '<div class="inw" style="margin-bottom:10px">'
         + '<input id="cid-name" type="text" value="' + E(d.name) + '" placeholder="Optional friendly name"/>'
         + '</div>'
         + '<div class="sec" style="padding-left:0">Starting Mask</div>'
@@ -636,8 +627,9 @@
         }).join('')
         + '</div>'
         + (d.error ? '<div class="err-inline" style="margin-bottom:10px">' + E(d.error) + '</div>' : '')
+        + '<div class="duo-foot">'
         + btn(d.busy ? 'Creating encrypted identity...' : 'Continue', '', 'data-act="signup"')
-        + '<div style="margin-top:10px">' + btn('Already have an ID or link code?', 'ghost', 'data-go="restore-account"') + '</div>'
+        + '<button class="btn ghost" data-go="restore-account">Already have an ID or link code?</button>'
         + '</div></div>';
     },
 
@@ -678,79 +670,85 @@
 
     'secure-device': function () {
       var s = LV.settings;
-      return '<div class="scr">'
-        + hdr('Lock it down', 'Protect this device', backBtn('create-id'), '<button style="color:var(--lime);font-weight:700" data-go="recovery-phrase">Skip</button>')
-        + '<div class="body pad nonav">'
-        + duoProgressBar('Step 2 of 4: Anti-Coercion & PIN', 50)
-        + '<div class="card">' + togRow('fingerprint', 'lime', 'Fingerprint / Face Unlock', 'Touch fingerprint sensor to open', s.biometric, 'biometric') + togRow('lock', 'lime', 'App Lock PIN', 'Ask for 4-digit PIN on open', s.appLock, 'appLock') + '</div>'
+      return '<div class="scr ob-duo">'
+        + duoTop(80, 'create-id', '<button style="color:var(--lime-d);font-weight:700;font-size:13px" data-go="recovery-phrase">Skip</button>')
+        + '<div class="duo-hero">'
+        + '<div class="duo-bear">' + global.JCA.mascot('shield', 84) + '</div>'
+        + '<div class="duo-speech">Lock down this device. Set a real PIN and an optional decoy Duress PIN.</div>'
+        + '</div>'
+        + '<div class="card" style="margin:0 0 12px">' + togRow('fingerprint', 'lime', 'Fingerprint / Face Unlock', 'Touch sensor to open', s.biometric, 'biometric') + togRow('lock', 'lime', 'App Lock PIN', 'Ask for 4-digit PIN on open', s.appLock, 'appLock') + '</div>'
         + '<div class="sec" style="padding-left:0">Real Unlock PIN (4 digits)</div>'
-        + '<div class="inw" style="margin-bottom:12px"><input id="sec-pin" type="password" maxlength="4" inputmode="numeric" value="' + E(s.lockPin || '') + '" placeholder="Leave blank or set 4 digits (e.g. 2468)"/></div>'
+        + '<div class="inw" style="margin-bottom:10px"><input id="sec-pin" type="password" maxlength="4" inputmode="numeric" value="' + E(s.lockPin || '') + '" placeholder="Leave blank or set 4 digits (e.g. 2468)"/></div>'
         + '<div class="sec" style="padding-left:0">Duress Decoy PIN (optional)</div>'
         + '<div class="inw" style="margin-bottom:8px"><input id="sec-dpin" type="password" maxlength="4" inputmode="numeric" value="' + E(s.duressPin || '') + '" placeholder="Opens harmless decoy inbox (e.g. 9999)"/></div>'
-        + '<p style="font-size:12px;color:var(--mute);margin-bottom:16px">If anyone forces you to unlock JChatt, entering your Duress PIN opens a separate, ordinary inbox while keeping your real chats invisible.</p>'
-        + btn('Save & see recovery phrase', '', 'data-act="savepins"')
-        + '</div></div>';
+        + '<p style="font-size:12px;color:var(--mute);margin-bottom:14px">Entering your Duress PIN opens an ordinary decoy inbox while keeping your real chats hidden.</p>'
+        + '<div class="duo-foot">' + btn('Save & see recovery phrase', '', 'data-act="savepins"') + '</div>'
+        + '</div>';
     },
 
     'recovery-phrase': function () {
-      var words = (LV.settings.phrase && LV.settings.phrase.length) ? LV.settings.phrase : global.JCA.generatePhrase();
+      var words = (LV.settings.phrase && LV.settings.phrase.length === 12) ? LV.settings.phrase : global.JCA.generatePhrase();
       LV.settings.phrase = words;
-      return '<div class="duo-onboarding-container">'
-        + '<div class="duo-top-nav">'
-        + '<button style="color:var(--mute)" data-back="1">' + I('back', 18) + '</button>'
-        + '<div class="duo-bar-container"><div class="duo-bar-fill" style="width:75%"></div></div>'
-        + '<span style="font-size:12px;font-weight:800;color:var(--lime)">STEP 3/4</span>'
+      var qz = LV.seedQuiz || { targets: [2, 8], picked: {}, wrongWord: '' };
+      var tA = words[qz.targets[0]];
+      var tB = words[qz.targets[1]];
+      var pool = [tA, tB, words[0] !== tA && words[0] !== tB ? words[0] : words[4], words[11] !== tA && words[11] !== tB ? words[11] : words[6]].slice().sort();
+      var doneCount = (qz.picked[tA] ? 1 : 0) + (qz.picked[tB] ? 1 : 0);
+      return '<div class="scr ob-duo">'
+        + duoTop(90, 'secure-device', '')
+        + '<div class="duo-hero">'
+        + '<div class="duo-bear">' + global.JCA.mascot(doneCount === 2 ? 'celebrate' : 'happy', 84) + '</div>'
+        + '<div class="duo-speech">' + (doneCount === 2 ? 'Locked in! Keep these 12 words somewhere offline and safe.' : 'Write these 12 words down offline. Without them, no one can restore your @ID.') + '</div>'
         + '</div>'
-        + '<div class="duo-mascot-speech-row">'
-        + '<div class="duo-mascot-box">' + global.JCA.mascot('celebrate', 92) + '</div>'
-        + '<div class="duo-bubble">Write these 12 words down offline! JChatt has no password reset email — this is your master titanium key.</div>'
+        + '<div class="seed-grid">'
+        + words.map(function (w, i) { return '<div class="seed-word"><em>' + (i + 1) + '.</em>' + E(w) + '</div>'; }).join('')
         + '</div>'
-        + '<div class="sn" style="grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">'
-        + words.map(function (w, i) { return '<div style="background:rgba(255,255,255,0.08);color:#fff;border:1.5px solid rgba(255,255,255,0.15);padding:10px 8px;border-radius:12px;font-weight:700;font-size:13px;text-align:center"><span style="color:var(--lime);margin-right:4px">' + (i + 1) + '.</span>' + E(w) + '</div>'; }).join('')
+        + '<div class="seed-quiz-box">'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700">'
+        + '<span>' + (doneCount === 2 ? 'Quick check passed' : 'Quick check: tap word #' + (qz.targets[0] + 1) + ' &amp; #' + (qz.targets[1] + 1)) + '</span>'
+        + '<span style="color:var(--lime-d)">' + doneCount + '/2</span>'
         + '</div>'
-        + '<div style="display:grid;gap:10px;margin-top:auto">'
-        + '<button class="duo-btn-chunky-ghost" data-act="copyphrase">' + I('copy', 16) + ' COPY PHRASE SAFELY</button>'
-        + '<button class="duo-btn-chunky-green" data-act="backedup">I WROTE IT DOWN · CONTINUE</button>'
+        + '<div class="seed-quiz-row">'
+        + pool.map(function (pw) {
+          var isOk = !!qz.picked[pw];
+          var isErr = qz.wrongWord === pw;
+          return '<button class="seed-quiz-pill ' + (isOk ? 'ok' : (isErr ? 'err' : '')) + '" data-act="seedquiz" data-v="' + E(pw) + '">' + (isOk ? I('check', 12) + ' ' : '') + E(pw) + '</button>';
+        }).join('')
+        + '</div></div>'
+        + '<div class="duo-foot">'
+        + btn(I('copy', 16) + ' Copy phrase safely', 'outline', 'data-act="copyphrase"')
+        + btn('I wrote it down · Continue', '', 'data-act="backedup"')
         + '</div></div>';
     },
 
     'permissions': function () {
-      return '<div class="duo-onboarding-container">'
-        + '<div class="duo-top-nav">'
-        + '<button style="color:var(--mute)" data-back="1">' + I('back', 18) + '</button>'
-        + '<div class="duo-bar-container"><div class="duo-bar-fill" style="width:100%"></div></div>'
-        + '<span style="font-size:12px;font-weight:800;color:var(--lime)">STEP 4/4</span>'
+      return '<div class="scr ob-duo">'
+        + duoTop(96, 'recovery-phrase', '')
+        + '<div class="duo-hero">'
+        + '<div class="duo-bear">' + global.JCA.mascot('happy', 88) + '</div>'
+        + '<div class="duo-speech">Almost ready! Optional permissions help alerts and voice calls arrive reliably.</div>'
         + '</div>'
-        + '<div class="duo-mascot-speech-row">'
-        + '<div class="duo-mascot-box">' + global.JCA.mascot('happy', 92) + '</div>'
-        + '<div class="duo-bubble">Almost done! Grant optional alerts so you never miss an encrypted message or private call.</div>'
+        + '<div class="duo-list">'
+        + '<button class="duo-card" data-act="reqnotif">' + ico('bell', 'lime') + '<div style="flex:1"><b style="display:block;font-size:14.5px">Message notifications</b><span style="display:block;font-size:12px;color:var(--mute)">Disguised previews without leaking message text</span></div>' + I('next', 16) + '</button>'
+        + '<button class="duo-card" data-act="reqmedia">' + ico('mic', 'ink') + '<div style="flex:1"><b style="display:block;font-size:14.5px">Microphone &amp; camera</b><span style="display:block;font-size:12px;color:var(--mute)">Only used during voice notes, calls &amp; QR scans</span></div>' + I('next', 16) + '</button>'
         + '</div>'
-        + '<div style="margin-bottom:16px">'
-        + '<div class="duo-option-card" data-act="reqnotif">'
-        + '<span style="font-size:22px">🔔</span>'
-        + '<div style="flex:1"><b style="display:block;font-size:14px">Disguised Notifications</b><span style="font-size:12px;color:var(--mute)">Private previews without leaking content</span></div>'
-        + '<div class="duo-check-circle">&#10003;</div>'
-        + '</div>'
-        + '<div class="duo-option-card" data-act="reqmedia">'
-        + '<span style="font-size:22px">🎙️</span>'
-        + '<div style="flex:1"><b style="display:block;font-size:14px">Microphone & Camera</b><span style="font-size:12px;color:var(--mute)">Peer-to-peer audio/video calls only</span></div>'
-        + '<div class="duo-check-circle">&#10003;</div>'
-        + '</div>'
-        + '</div>'
-        + '<div style="margin-top:auto">'
-        + '<button class="duo-btn-chunky-green" data-go="account-ready">FINISH SETUP</button>'
+        + '<div class="duo-foot">'
+        + btn('Finish setup', '', 'data-go="account-ready"')
         + '</div></div>';
     },
 
     'account-ready': function () {
       var me = global.JFE.me || {};
-      return '<div class="duo-onboarding-container" style="justify-content:center;align-items:center;text-align:center">'
-        + '<div class="duo-mascot-box" style="margin-bottom:18px">' + global.JCA.mascot('celebrate', 130) + '</div>'
-        + '<div class="pill" style="background:rgba(88,204,2,0.18);border:1.5px solid #58cc02;color:#58cc02;font-weight:800;margin-bottom:12px">TITANIUM SECURITY UNLOCKED</div>'
-        + '<h2 style="font-size:24px;font-weight:800;margin-bottom:8px">You Are Fully Sovereign!</h2>'
-        + '<p style="font-size:14px;color:var(--mute);max-width:320px;margin-bottom:24px">Your private handle is <b style="color:#fff">' + E(me.handle || '@user') + '</b>. Zero tracking, zero phone numbers, total privacy.</p>'
-        + '<div style="width:100%;max-width:340px">'
-        + '<button class="duo-btn-chunky-green" data-act="enterapp">LAUNCH MY INBOX 🚀</button>'
+      return '<div class="scr ob-duo">'
+        + duoTop(100, '', '')
+        + '<div style="flex:1;display:grid;place-content:center;justify-items:center;text-align:center;gap:12px;padding:12px 0">'
+        + '<div class="duo-bear">' + global.JCA.mascot('celebrate', 132) + '</div>'
+        + '<span class="pill on" style="font-weight:700">' + I('check', 13) + ' Ready to chat privately</span>'
+        + '<h2 style="font-size:26px;font-weight:800;letter-spacing:-.03em">You are live on JChatt</h2>'
+        + '<p style="font-size:13.5px;color:var(--mute);max-width:300px;line-height:1.5">Your handle <b style="color:var(--text)">' + E(me.handle || '@user') + '</b> is active with end-to-end encryption.</p>'
+        + '</div>'
+        + '<div class="duo-foot">'
+        + btn('Open my inbox', '', 'data-act="enterapp"')
         + '</div></div>';
     },
 
@@ -829,14 +827,6 @@
         )
         + statusBanner
         + notifBanner
-        + '<div class="airbnb-search-trigger" data-act="open_cmd_palette">'
-        + '<span style="color:#00a884;display:flex">' + I('search', 16) + '</span>'
-        + '<span class="airbnb-search-seg">Search Messages</span>'
-        + '<span class="airbnb-divider"></span>'
-        + '<span class="airbnb-search-seg sub">Media & Files</span>'
-        + '<span class="airbnb-divider"></span>'
-        + '<span class="airbnb-search-seg sub"><kbd class="linear-kbd">⌘K</kbd></span>'
-        + '</div>'
         + '<div class="chips">'
         + chip('all', 'All', LV.filter === 'all')
         + chip('unread', 'Unread', LV.filter === 'unread')
@@ -947,13 +937,27 @@
         + '<div class="ringc" style="--p:' + score + '"><div><b>' + score + '</b><small>/ 100</small></div></div>'
         + '<div style="flex:1;min-width:0"><b>' + (score >= 85 ? 'Hardened' : 'Good protection') + '</b>'
         + '<p style="font-size:12px;color:var(--mute);margin:4px 0 8px">' + E(nextTip.t) + '</p>'
-        + '<button class="pill on" data-go="' + nextTip.g + '">Review -></button>'
+        + '<button class="pill on" data-go="' + nextTip.g + '">Review &#8594;</button>'
         + '</div></div>'
         + '<div class="gr2" style="padding:0;margin-bottom:12px">'
-        + '<button style="background:#e2f4d0" data-go="vault-lock">' + ico('lock', 'ink') + '<b>Hidden Vault</b><span style="font-size:11px;color:var(--mute)">Separate PIN space</span></button>'
-        + '<button style="background:#dbeeff" data-go="masks">' + ico('mask', 'ink') + '<b>Identity Masks</b><span style="font-size:11px;color:var(--mute)">Switch display persona</span></button>'
-        + '<button style="background:#ffe3d3" data-go="disguise">' + ico(disObj.ic, 'org') + '<b>App Disguise</b><span style="font-size:11px;color:var(--mute)">' + E(disObj.name) + '</span></button>'
-        + '<button style="background:#e7e9ff" data-go="devices">' + ico('laptop', 'ink') + '<b>Linked Devices</b><span style="font-size:11px;color:var(--mute)">Link Web & Phone</span></button>'
+        + '<button style="background:#e2f4d0;color:#0a2230" data-go="vault-lock">' + ico('lock', 'ink') + '<b>Hidden Vault</b><span style="font-size:11px;color:#3d535c">Separate PIN space</span></button>'
+        + '<button style="background:#dbeeff;color:#0a2230" data-go="masks">' + ico('mask', 'ink') + '<b>Identity Masks</b><span style="font-size:11px;color:#3d535c">Switch display persona</span></button>'
+        + '<button style="background:#ffe3d3;color:#0a2230" data-go="disguise">' + ico(disObj.ic, 'org') + '<b>App Disguise</b><span style="font-size:11px;color:#3d535c">' + E(disObj.name) + '</span></button>'
+        + '<button style="background:#e7e9ff;color:#0a2230" data-go="devices">' + ico('laptop', 'ink') + '<b>Linked Devices</b><span style="font-size:11px;color:#3d535c">Link Web &amp; Phone</span></button>'
+        + '</div>'
+        + '<div class="card ndisclose" style="margin:0 0 12px">'
+        + '<button class="ndisclose-hd" data-act="tgshield">'
+        + '<span>' + I('shield', 14) + ' Encryption &amp; vault status</span>'
+        + '<span style="font-size:11px;color:var(--mute)">' + (LV.shieldExpanded ? 'Hide' : 'Details') + '</span>'
+        + '</button>'
+        + (LV.shieldExpanded
+          ? '<div class="ndisclose-grid">'
+            + '<div class="ndisclose-stat"><span>Message cipher</span><b>AES-256-GCM</b></div>'
+            + '<div class="ndisclose-stat"><span>Session ratchet</span><b>Forward v3</b></div>'
+            + '<div class="ndisclose-stat"><span>Screenshot guard</span><b>' + (s.blockScreenshots ? 'Armed' : 'Off') + '</b></div>'
+            + '<div class="ndisclose-stat"><span>Recovery backup</span><b>' + (s.phraseBackedUp ? 'Verified' : 'Pending') + '</b></div>'
+            + '</div>'
+          : '')
         + '</div>'
         + '<div class="card" style="margin:0">'
         + row(ico('key', 'lime'), 'Recovery phrase & keys', s.phraseBackedUp ? 'Verified offline' : 'Backup recommended', I('next', 16), 'data-go="recovery-phrase"')
@@ -985,7 +989,7 @@
             return '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;' + (isCurrent ? 'font-weight:700;' : 'opacity:0.85;') + '">'
               + av(acc.handle || 'user', 36, acc.avatar, true)
               + '<div style="flex:1;min-width:0">'
-              + '<div style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + E(acc.name || acc.handle) + (isCurrent ? ' <span style="font-size:11px;color:var(--lime-d)">● Active</span>' : '') + '</div>'
+              + '<div style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + E(acc.name || acc.handle) + (isCurrent ? ' <span style="font-size:11px;color:var(--lime-d)">Active</span>' : '') + '</div>'
               + '<div style="font-size:12px;color:var(--mute)">' + E(acc.handle) + '</div>'
               + '</div>'
               + (!isCurrent ? '<button class="pill" data-act="switch_account" data-uid="' + E(acc.uid) + '" style="font-weight:700">Switch</button>' : '')
@@ -998,35 +1002,20 @@
         + hdr('<span class="ttl big">You</span>', me.handle || '', '', rb('qr', 'data-go="my-qr"'))
         + '<div class="body pad">'
         + '<div class="card" style="margin:0 0 12px">'
-        + row(av(me.handle || 'me', 54, me.avatar, true), E(me.name || me.handle || 'Account'), E(me.bio || 'Available on JChatt') + ' · ' + E(me.handle || ''), I('edit', 17), 'data-go="profile-edit"')
+        + row(av(me.handle || 'me', 54, me.avatar, true), E(me.name || me.handle || 'Account'), E(me.bio || 'Available on JChatt') + (me.handle ? ' · ' + E(me.handle) : ''), I('edit', 17), 'data-go="profile-edit"')
         + '</div>'
         + accountSwitcherHtml
-        + '<div class="aesop-sanctuary-banner" style="margin-bottom:12px">'
-        + '<div class="aesop-quote">“To converse without third-party observation is not secrecy, but the natural birthright of thought. Speech is human sanctuary.”</div>'
-        + '<div class="aesop-cite">JChatt Sovereign Charter · Zero Metadata</div>'
-        + '</div>'
-        + '<div class="card" style="margin-bottom:12px;padding:12px 14px">'
-        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
-        + '<b style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute)">System Cryptographic Telemetry</b>'
-        + '<span class="pill" style="font-size:10px;background:rgba(0,168,132,0.15);color:#00a884;font-weight:700">ECDH P-256</span>'
-        + '</div>'
-        + '<div class="notion-metric-grid">'
-        + '<div class="notion-metric-tile"><span>Cipher Suite</span><b>AES-256-GCM</b></div>'
-        + '<div class="notion-metric-tile"><span>Forward Secrecy</span><b>Ratchet v3</b></div>'
-        + '<div class="notion-metric-tile"><span>Key Material</span><b>12-Word BIP-39</b></div>'
-        + '<div class="notion-metric-tile"><span>Command Palette</span><b style="cursor:pointer;color:var(--lime)" data-act="open_cmd_palette">Open (⌘K)</b></div>'
-        + '</div>'
-        + '</div>'
         + '<div class="gr2" style="padding:0;margin-bottom:12px">'
-        + '<button style="background:#fff" data-go="appearance">' + ico('palette', 'lime') + '<b>Appearance</b><span style="font-size:11px;color:var(--mute)">' + (s.darkMode ? 'Dark' : 'Light') + ' · ' + E(s.theme) + '</span></button>'
-        + '<button style="background:#fff" data-go="privacy-settings">' + ico('lock', 'ink') + '<b>Privacy</b><span style="font-size:11px;color:var(--mute)">Locks & receipts</span></button>'
-        + '<button style="background:#fff" data-go="notifications">' + ico('bell', 'ink') + '<b>Notifications</b><span style="font-size:11px;color:var(--mute)">Disguised alerts</span></button>'
-        + '<button style="background:#fff" data-go="storage">' + ico('cloud', 'ink') + '<b>Storage & Backup</b><span style="font-size:11px;color:var(--mute)">Media & JSON export</span></button>'
-        + '<button style="background:#fff" data-go="wallet">' + ico('wallet', 'lime') + '<b>Wallet</b><span style="font-size:11px;color:var(--mute)">Local demo vault</span></button>'
-        + '<button style="background:#fff" data-go="explore">' + ico('compass', 'org') + '<b>36+ Mini-Apps</b><span style="font-size:11px;color:var(--mute)">Spaces, tools & AI</span></button>'
+        + '<button class="tile-btn" data-go="appearance">' + ico('palette', 'lime') + '<b>Appearance</b><span style="font-size:11px;color:var(--mute)">' + (s.darkMode ? 'Dark' : 'Light') + ' · ' + E(s.theme) + '</span></button>'
+        + '<button class="tile-btn" data-go="privacy-settings">' + ico('lock', 'ink') + '<b>Privacy</b><span style="font-size:11px;color:var(--mute)">Locks & receipts</span></button>'
+        + '<button class="tile-btn" data-go="notifications">' + ico('bell', 'ink') + '<b>Notifications</b><span style="font-size:11px;color:var(--mute)">Disguised alerts</span></button>'
+        + '<button class="tile-btn" data-go="storage">' + ico('cloud', 'ink') + '<b>Storage & Backup</b><span style="font-size:11px;color:var(--mute)">Media & JSON export</span></button>'
+        + '<button class="tile-btn" data-go="wallet">' + ico('wallet', 'lime') + '<b>Wallet</b><span style="font-size:11px;color:var(--mute)">Local demo vault</span></button>'
+        + '<button class="tile-btn" data-go="explore">' + ico('compass', 'org') + '<b>36+ Mini-Apps</b><span style="font-size:11px;color:var(--mute)">Spaces, tools & AI</span></button>'
         + '</div>'
         + '<div class="card" style="margin:0">'
         + row(ico('share', 'ink'), 'Invite a friend', 'Generate a one-time link or QR', I('next', 16), 'data-go="invite"')
+        + row(ico('search', 'ink'), 'Quick commands', 'Jump between chats or lock anytime', '<span class="kbd">&#8984;K</span>', 'data-act="open_cmd_palette"')
         + row(ico('help', 'ink'), 'Help & About JChatt', 'Support, changelog & audit info', I('next', 16), 'data-go="settings-more"')
         + row(ico('logout', 'org'), 'Sign out or lock', 'Return to welcome or lock screen', I('next', 16), 'data-go="logout-confirm"')
         + '</div></div>'
@@ -1275,92 +1264,67 @@
     },
 
     'search': function () {
+      var Engine = global.JFE;
       var q = (LV.searchQ || '').trim().toLowerCase();
       var filter = LV.searchFilter || 'all';
       var allChats = sortedChats(true);
-      var chats = allChats.filter(function (c) {
-        if (filter === 'unread' && !(c.unread > 0)) return false;
-        if (!q) return true;
-        return (c.name && c.name.toLowerCase().indexOf(q) > -1) ||
-               (c.handle && c.handle.toLowerCase().indexOf(q) > -1) ||
-               (c.lastText && c.lastText.toLowerCase().indexOf(q) > -1);
+      function hi(txt) {
+        var s = String(txt || '');
+        if (!q) return E(s);
+        var idx = s.toLowerCase().indexOf(q);
+        if (idx === -1) return E(s);
+        return E(s.slice(0, idx)) + '<mark class="q-hit">' + E(s.slice(idx, idx + q.length)) + '</mark>' + E(s.slice(idx + q.length));
+      }
+      var results = [];
+      allChats.forEach(function (c) {
+        if (filter === 'unread' && !(c.unread > 0)) return;
+        if (filter === 'chats' && c.kind === 'group') return;
+        if (filter === 'vault' && !(LV.settings.vaultChatIds && LV.settings.vaultChatIds[c.id])) return;
+        var msgs = Engine.getChatMessages(c.id) || [];
+        if (filter === 'photos' || filter === 'voice' || filter === 'doc') {
+          var kindWant = filter === 'photos' ? 'photo' : filter;
+          var hits = msgs.filter(function (m) {
+            if (m.kind !== kindWant) return false;
+            return !q || (m.text && m.text.toLowerCase().indexOf(q) > -1) || (m.doc && m.doc.name && m.doc.name.toLowerCase().indexOf(q) > -1);
+          });
+          hits.slice(-3).reverse().forEach(function (m) {
+            results.push({ chat: c, sub: hi(m.text || (m.doc && m.doc.name) || (kindWant === 'voice' ? 'Voice note (' + fmtDur(m.audioSec || 3) + ')' : 'Shared ' + kindWant)), ts: m.ts || c.lastTs });
+          });
+          return;
+        }
+        var headerMatch = !q || (c.name && c.name.toLowerCase().indexOf(q) > -1) || (c.handle && c.handle.toLowerCase().indexOf(q) > -1) || (c.lastText && c.lastText.toLowerCase().indexOf(q) > -1);
+        var matchedMsg = q ? msgs.slice().reverse().find(function (m) { return m.text && m.text.toLowerCase().indexOf(q) > -1; }) : null;
+        if (headerMatch || matchedMsg) {
+          results.push({ chat: c, sub: matchedMsg ? hi(matchedMsg.text) : hi(c.lastText || c.handle || ''), ts: (matchedMsg && matchedMsg.ts) || c.lastTs });
+        }
       });
 
-      var filterPills = [
-        { id: 'all', label: '✨ All' },
-        { id: 'chats', label: '💬 Direct Chats' },
-        { id: 'unread', label: '🔴 Unread' },
-        { id: 'photos', label: '📸 Media' },
-        { id: 'voice', label: '🎙️ Voice' },
-        { id: 'vault', label: '🔒 Vault' }
+      var pills = [
+        ['all', 'All'],
+        ['chats', 'Chats'],
+        ['unread', 'Unread'],
+        ['photos', 'Media'],
+        ['voice', 'Voice'],
+        ['doc', 'Files'],
+        ['vault', 'Vault']
       ].map(function (p) {
-        var on = filter === p.id;
-        return '<button class="airbnb-pill ' + (on ? 'on' : '') + '" data-act="set_search_filter" data-v="' + p.id + '">' + p.label + '</button>';
+        return '<button class="search-pill ' + (filter === p[0] ? 'on' : '') + '" data-act="set_search_filter" data-v="' + p[0] + '">' + p[1] + '</button>';
       }).join('');
 
       return '<div class="scr">'
-        + hdr('Search', 'Airbnb Filter & Discovery', backBtn('chats'), '<kbd class="linear-kbd">ESC</kbd>')
+        + hdr('Search', 'On this device', backBtn('chats'), '')
         + '<div class="body pad nonav">'
-        + '<div class="inw" style="margin-bottom:8px">' + I('search', 18) + '<input id="glob-search" type="text" value="' + E(LV.searchQ) + '" placeholder="Search names, @IDs, messages or vault..."/></div>'
-        + '<div class="airbnb-filter-scroll" style="margin:0 -16px 8px -16px">' + filterPills + '</div>'
-        + (chats.length ? chats.map(function (c) {
-          var snippet = c.lastText || c.handle || '';
-          if (q && snippet.toLowerCase().indexOf(q) > -1) {
-            var idx = snippet.toLowerCase().indexOf(q);
-            snippet = E(snippet.substring(0, idx)) + '<span class="airbnb-search-match">' + E(snippet.substring(idx, idx + q.length)) + '</span>' + E(snippet.substring(idx + q.length));
-          } else {
-            snippet = E(snippet);
-          }
-          return row(av(c.name || c.handle, 42, c.avatar), E(c.name || c.handle), snippet, fmtTime(c.lastTs), 'data-act="open" data-id="' + E(c.id) + '"');
-        }).join('') : emptyP('search', 'No matches found', 'Try another search term or filter category.', ''))
+        + '<div class="inw" style="margin-bottom:10px">' + I('search', 18) + '<input id="glob-search" type="text" value="' + E(LV.searchQ) + '" placeholder="Search names, @IDs or messages..."/></div>'
+        + '<div class="search-pills">' + pills + '</div>'
+        + (results.length ? results.map(function (r) {
+          var c = r.chat;
+          return row(av(c.name || c.handle, 42, c.avatar), hi(c.name || c.handle), r.sub, fmtTime(r.ts), 'data-act="open" data-id="' + E(c.id) + '"');
+        }).join('') : emptyP('search', 'No matches', 'Try another name, phrase, or filter tab.', ''))
         + '</div></div>';
     },
 
     'cmd-palette': function () {
-      var q = (LV.cmdQ || '').trim().toLowerCase();
-      var actions = [
-        { group: 'Navigation', icon: 'chats', label: 'Go to Chats / Inbox', act: 'go_chats', kbd: 'G C' },
-        { group: 'Navigation', icon: 'calls', label: 'Go to Calls Screen', act: 'go_calls', kbd: 'G A' },
-        { group: 'Navigation', icon: 'settings', label: 'Open Settings & Vault', act: 'go_settings', kbd: 'G S' },
-        { group: 'Actions', icon: 'users', label: 'Start New Private Chat', act: 'new_chat_prompt', kbd: '⌘ N' },
-        { group: 'Actions', icon: 'qr', label: 'Share / Scan QR Invite', act: 'open_qr', kbd: '⌘ Q' },
-        { group: 'Security', icon: 'lock', label: 'Lock Device Now (Biometric)', act: 'locknow', kbd: '⌘ L' },
-        { group: 'Security', icon: 'shield', label: 'Anti-Coercion Stealth Mode', act: 'open_stealth', kbd: '⌘ D' },
-        { group: 'Theme', icon: 'moon', label: 'Toggle Light / Dark Theme', act: 'toggle_theme', kbd: '⌘ T' }
-      ].filter(function (a) {
-        return !q || a.label.toLowerCase().indexOf(q) > -1 || a.group.toLowerCase().indexOf(q) > -1;
-      });
-
-      var groups = {};
-      actions.forEach(function (a) {
-        groups[a.group] = groups[a.group] || [];
-        groups[a.group].push(a);
-      });
-
-      var html = '<div class="cmd-palette-backdrop" data-act="wclose">'
-        + '<div class="cmd-palette-modal" onclick="event.stopPropagation()">'
-        + '<div class="cmd-input-row">'
-        + I('search', 18)
-        + '<input id="cmd-input" type="text" value="' + E(LV.cmdQ || '') + '" placeholder="Type a command or search... (Linear Style)" autofocus/>'
-        + '<kbd class="linear-kbd">ESC</kbd>'
-        + '</div>'
-        + '<div class="cmd-results-list">';
-
-      Object.keys(groups).forEach(function (grp) {
-        html += '<div class="cmd-group-label">' + E(grp) + '</div>';
-        groups[grp].forEach(function (item) {
-          html += '<div class="cmd-item" data-act="' + item.act + '">'
-            + '<div style="display:flex;align-items:center;gap:10px">'
-            + I(item.icon, 16)
-            + '<span>' + E(item.label) + '</span>'
-            + '</div>'
-            + '<kbd class="linear-kbd">' + E(item.kbd) + '</kbd>'
-            + '</div>';
-        });
-      });
-
-      html += '</div></div></div>';
-      return html;
+      return SCREENS['chats']() + renderCmdPalette();
     },
 
     'qr': function () {
@@ -1594,6 +1558,59 @@
       + '</div></div>';
   }
 
+  function getCmdItems(qRaw) {
+    var q = (qRaw || '').trim().toLowerCase();
+    var chats = sortedChats(true).slice(0, 8).map(function (c) {
+      return { group: 'Recent Chats', icon: 'chats', label: c.name || c.handle || 'Conversation', sub: c.handle || '', act: 'open', id: c.id, kbd: 'Open' };
+    });
+    var actions = [
+      { group: 'Navigate', icon: 'chats', label: 'Chats', act: 'go_chats', kbd: 'G C' },
+      { group: 'Navigate', icon: 'updates', label: 'Updates', act: 'go_updates', kbd: 'G U' },
+      { group: 'Navigate', icon: 'calls', label: 'Calls', act: 'go_calls', kbd: 'G A' },
+      { group: 'Navigate', icon: 'shield', label: 'Shield & Vault', act: 'go_shield', kbd: 'G V' },
+      { group: 'Navigate', icon: 'settings', label: 'Settings', act: 'go_settings', kbd: 'G S' },
+      { group: 'Actions', icon: 'userPlus', label: 'Add contact by @ID', act: 'new_chat_prompt', kbd: '⌘ N' },
+      { group: 'Actions', icon: 'qr', label: 'Scan or share QR code', act: 'open_qr', kbd: '⌘ Q' },
+      { group: 'Security', icon: 'lock', label: 'Lock JChatt now', act: 'locknow', kbd: '⌘ L' },
+      { group: 'Security', icon: 'calc', label: 'App disguise & decoy mode', act: 'open_stealth', kbd: '⌘ D' },
+      { group: 'Appearance', icon: LV.settings.darkMode ? 'sun' : 'moon', label: LV.settings.darkMode ? 'Switch to Light theme' : 'Switch to Dark theme', act: 'toggle_theme', kbd: '⌘ T' }
+    ];
+    return chats.concat(actions).filter(function (a) {
+      return !q || a.label.toLowerCase().indexOf(q) > -1 || a.group.toLowerCase().indexOf(q) > -1 || (a.sub && a.sub.toLowerCase().indexOf(q) > -1);
+    });
+  }
+
+  function renderCmdPalette() {
+    var items = getCmdItems(LV.cmdQ);
+    var selIdx = Math.max(0, Math.min(LV.cmdIdx || 0, Math.max(0, items.length - 1)));
+    LV.cmdIdx = selIdx;
+    var groups = {};
+    var order = [];
+    items.forEach(function (a, i) {
+      a._idx = i;
+      if (!groups[a.group]) { groups[a.group] = []; order.push(a.group); }
+      groups[a.group].push(a);
+    });
+    var listHtml = order.length ? order.map(function (grp) {
+      return '<div class="cmd-grp">' + E(grp) + '</div>' + groups[grp].map(function (it) {
+        var extra = it.id ? ' data-id="' + E(it.id) + '"' : '';
+        return '<button class="cmd-item ' + (it._idx === selIdx ? 'sel' : '') + '" data-act="' + E(it.act) + '"' + extra + '>'
+          + '<span class="cmd-item-l">' + I(it.icon, 16) + '<span>' + E(it.label) + '</span></span>'
+          + '<span class="kbd">' + E(it.kbd) + '</span>'
+          + '</button>';
+      }).join('');
+    }).join('') : '<div style="padding:28px;text-align:center;color:var(--mute);font-size:13px">No matching chats or commands</div>';
+
+    return '<div class="cmd-bg" data-act="close_cmd_palette">'
+      + '<div class="cmd-box" onclick="event.stopPropagation()">'
+      + '<div class="cmd-top">' + I('search', 18)
+      + '<input id="cmd-input" type="text" value="' + E(LV.cmdQ || '') + '" placeholder="Search chats, @handles, or commands..."/>'
+      + '<button class="kbd" data-act="close_cmd_palette">ESC</button>'
+      + '</div>'
+      + '<div class="cmd-list">' + listHtml + '</div>'
+      + '</div></div>';
+  }
+
   global.JCS = {
     LV: LV,
     DURESS_CHATS: DURESS_CHATS,
@@ -1617,6 +1634,8 @@
     knownContacts: knownContacts,
     shieldScore: shieldScore,
     renderMessagesList: renderMessagesList,
-    renderComposer: renderComposer
+    renderComposer: renderComposer,
+    getCmdItems: getCmdItems,
+    renderCmdPalette: renderCmdPalette
   };
 })(window);
